@@ -36,6 +36,9 @@ Terminal 2 (Linux/macOS: `.venv/bin/relay-host`):
 .venv\Scripts\relay-host on               # -> ERR UNKNOWN_CMD (exit code 1)
 .venv\Scripts\relay-host " ON"            # -> ERR UNKNOWN_CMD (exit code 1)
 .venv\Scripts\relay-host --% ""           # -> ERR EMPTY (exit code 1); in cmd.exe/bash: relay-host ""
+.venv\Scripts\relay-host OFF              # -> BUSY (exit code 1) if within 2 s of the last toggle (CR-01)
+# wait at least 2 s, then:
+.venv\Scripts\relay-host OFF              # -> OK
 ```
 `$LASTEXITCODE` (PowerShell) or `echo $?` (bash) shows the exit code of the last command.
 `relay-host [--host H] [--port P] [--timeout S] COMMAND`. Exit codes: 0 `OK`/`STATUS`, 1 any other reply
@@ -58,17 +61,19 @@ Send an empty line with ``relay-host `"`"`` or `relay-host --% ""` (cmd.exe, bas
 | `STATUS` | `STATUS ON` / `STATUS OFF` |
 | empty line / longer than 32 bytes / anything else | `ERR EMPTY` / `ERR TOO_LONG` / `ERR UNKNOWN_CMD` |
 | `ON` / `OFF` during an injected hardware fault | `ERR HW_FAULT` |
+| `ON` / `OFF` that would toggle less than 2 s after the previous toggle (CR-01) | `BUSY` (exit code 1) |
 
 Full specification: [specs/2026-11-20-f1-relay-control/requirements.md](specs/2026-11-20-f1-relay-control/requirements.md).
 
 ## Project layout
 ```
 specs/                              constitution (mission, roadmap, tech-stack) + one folder per feature
-  2026-11-20-f1-relay-control/      requirements.md -> plan.md -> validation.md
+  2026-11-20-f1-relay-control/      requirements.md -> plan.md -> validation.md (CR-01: section 8 "Changes")
 src/relay_sim/                      simulator: device logic, clocks, serial + control-API TCP servers
 src/relay_host/                     relay-host CLI (pyserial socket://)
 tests/e2e/                          E2E fixtures (conftest.py, helpers.py) and tests
 .claude/skills/e2e-test-conventions/  skill used for all E2E test work (SKILL.md, references, scripts, evals)
-reports/                            e2e-runs.md (5-run summary), skill-evals.md (skill evals v1 -> v2)
+reports/                            e2e-runs.md (latest run.py summary), regression-cr01.md (+ .html: CR-01
+                                    regression run), skill-evals.md (skill evals v1 -> v2)
 run.py                              the one command
 ```

@@ -70,7 +70,7 @@ Status: approved 2026-11-20 (updated after the G0-G3 review) | Inputs: `requirem
 ---
 
 ## CR-01: Toggle rate limit (Phase 2)
-Status: approved 2026-11-20 | Inputs: `requirements.md` section 8 (CR-01), skill `e2e-test-conventions`.
+Status: approved 2026-11-20; G8-G11 done 2026-11-20 (see validation.md "CR-01") | Inputs: `requirements.md` section 8 (CR-01), skill `e2e-test-conventions`.
 G0-G7 above stay as they are; CR-01 adds the groups below.
 
 ### G8. Implementation (`src/relay_sim/device.py`)

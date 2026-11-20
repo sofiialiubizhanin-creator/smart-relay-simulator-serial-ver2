@@ -1,6 +1,7 @@
-"""E2E tests for F1: relay control and status.
+"""E2E tests for F1: relay control and status, including change request CR-01 (toggle rate limit).
 
-Source: specs/2026-11-20-f1-relay-control/requirements.md section 5 (AC-F1-xx) and validation.md (how to verify).
+Source: specs/2026-11-20-f1-relay-control/requirements.md section 5 (AC-F1-01..16) and section 8 (CR-01: changed
+AC-F1-13/14, new AC-F1-17..22), and validation.md (how to verify).
 Conventions: skill e2e-test-conventions. Every test starts from a reset simulator: state OFF, no fault, no silence, clock 0.
 """
 import pytest

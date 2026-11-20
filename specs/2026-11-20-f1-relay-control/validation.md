@@ -45,22 +45,32 @@ All 16 F1 acceptance criteria pass. AC-F1-14 is expected to change with CR-01 (p
 ---
 
 ## CR-01: Toggle rate limit (requirements section 8)
-Status: **pre-implementation** (what and how we verify). The F1 results above stay as the phase 1 record;
-CR-01 results are filled in below. Time is moved only with `control.advance()` (manual clock), never sleep.
+Status: **validated** 2026-11-20. Written before implementation; Test(s) filled in G10, Result in G11.
+The F1 results above stay as the phase 1 record; CR-01 results are filled in below. Time is moved only with `control.advance()` (manual clock), never sleep.
 "Toggle X" = host `X` that changes the state and replies `OK`.
 
 | AC | What we verify | How (setup -> action -> expected) | Test(s) | Result |
 |---|---|---|---|---|
-| AC-F1-14 (changed) | Quick sequence under CR-01 | four separate host calls `ON`, `OFF`, `ON`, `STATUS`, no `ADVANCE` -> `OK`, `BUSY`, `OK`, `STATUS ON`; final state ON | `test_ac_f1_14_quick_sequence_without_clock_advance` | |
-| AC-F1-17 | Toggle inside the window is `BUSY` | both directions (set OFF -> toggle `ON`; set ON -> toggle `OFF`); then advance 0 / 1.999 -> the opposite command -> `BUSY`/1, state unchanged | `test_ac_f1_17_toggle_inside_window_replies_busy` | |
-| AC-F1-18 | Toggle at or after 2.000 s is accepted | both directions; after the first toggle advance 2.000, 2.5, or 1.999 + 0.001 (two steps) -> the opposite command -> `OK`/0, state changed | `test_ac_f1_18_toggle_at_or_after_window_replies_ok` | |
-| AC-F1-19 | `BUSY` does not restart the window | toggle `ON` at 0; advance 1.5 -> `OFF` -> `BUSY`; advance 0.5 (t = 2.0) -> `OFF` -> `OK`, state OFF | `test_ac_f1_19_busy_does_not_restart_window` | |
-| AC-F1-20 | `STATUS` and no-op inside the window | toggle `ON` at 0; advance 1.0 -> `STATUS` -> `STATUS ON`/0, `ON` -> `OK`/0, state ON; advance 1.0 (t = 2.0) -> `OFF` -> `OK`, state OFF | `test_ac_f1_20_status_and_noop_inside_window` | |
-| AC-F1-21 | `RESET` clears the window; `SET_STATE` starts none | (a) toggle `ON`, `RESET` (state OFF) -> `ON` at once -> `OK`, state ON; (b) `SET_STATE ON` -> `OFF` at once -> `OK`, state OFF | `test_ac_f1_21_reset_clears_window`, `test_ac_f1_21_set_state_starts_no_window` | |
-| AC-F1-22 | Priority over `BUSY` | toggle `ON` at 0, advance 0.5: with `FAULT HW_FAULT` -> `OFF` -> `ERR HW_FAULT`/1; without fault: `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`, `off` -> `ERR UNKNOWN_CMD` (never `BUSY`); state stays ON | `test_ac_f1_22_hw_fault_has_priority_over_busy`, `test_ac_f1_22_invalid_line_inside_window_keeps_own_error` | |
+| AC-F1-13 (changed) | State persists, with the toggle window | host `ON` -> `STATUS ON`; advance 2.0; host `OFF` -> `OK` -> `STATUS OFF`; state OFF (found by the regression run) | `test_ac_f1_13_state_persists_across_host_calls` | PASS 5/5 (1 case) |
+| AC-F1-14 (changed) | Quick sequence under CR-01 | four separate host calls `ON`, `OFF`, `ON`, `STATUS`, no `ADVANCE` -> `OK`, `BUSY`, `OK`, `STATUS ON`; final state ON | `test_ac_f1_14_quick_sequence_without_clock_advance` | PASS 5/5 (1 case) |
+| AC-F1-17 | Toggle inside the window is `BUSY` | both directions (set OFF -> toggle `ON`; set ON -> toggle `OFF`); then advance 0 / 1.999 -> the opposite command -> `BUSY`/1, state unchanged | `test_ac_f1_17_toggle_inside_window_replies_busy` | PASS 5/5 (4 cases) |
+| AC-F1-18 | Toggle at or after 2.000 s is accepted | both directions; after the first toggle advance 2.000, 2.5, or 1.999 + 0.001 (two steps) -> the opposite command -> `OK`/0, state changed | `test_ac_f1_18_toggle_at_or_after_window_replies_ok` | PASS 5/5 (6 cases) |
+| AC-F1-19 | `BUSY` does not restart the window | toggle `ON` at 0; advance 1.5 -> `OFF` -> `BUSY`; advance 0.5 (t = 2.0) -> `OFF` -> `OK`, state OFF | `test_ac_f1_19_busy_does_not_restart_window` | PASS 5/5 (1 case) |
+| AC-F1-20 | `STATUS` and no-op inside the window | toggle `ON` at 0; advance 1.0 -> `STATUS` -> `STATUS ON`/0, `ON` -> `OK`/0, state ON; advance 1.0 (t = 2.0) -> `OFF` -> `OK`, state OFF | `test_ac_f1_20_status_and_noop_inside_window` | PASS 5/5 (1 case) |
+| AC-F1-21 | `RESET` clears the window; `SET_STATE` starts none | (a) toggle `ON`, `RESET` (state OFF) -> `ON` at once -> `OK`, state ON; (b) `SET_STATE ON` -> `OFF` at once -> `OK`, state OFF | `test_ac_f1_21_reset_clears_window`, `test_ac_f1_21_set_state_starts_no_window` | PASS 5/5 (2 cases) |
+| AC-F1-22 | Priority over `BUSY` | toggle `ON` at 0, advance 0.5: with `FAULT HW_FAULT` -> `OFF` -> `ERR HW_FAULT`/1; without fault: `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`, `off` -> `ERR UNKNOWN_CMD` (never `BUSY`); state stays ON | `test_ac_f1_22_hw_fault_has_priority_over_busy`, `test_ac_f1_22_invalid_line_inside_window_keeps_own_error` | PASS 5/5 (4 cases) |
 
 | Check | How | Result |
 |---|---|---|
-| Regression run | Unchanged F1 suite (commit `4293653`) against the CR-01 implementation; failing tests, cause and action recorded in `reports/regression-cr01.md` | |
-| 5 green runs in a row | `python run.py` -> 5/5 with the updated and new tests | |
-| AC coverage / independence | coverage script exits 0 (AC-F1-01..22); suite green with `--reverse` | |
+| Regression run | Unchanged F1 suite (commit `4293653`) against the CR-01 implementation; failing tests, cause and action recorded in `reports/regression-cr01.md` | DONE: 2 of 73 failed (AC-F1-13, AC-F1-14), 71 unaffected; both superseded in requirements section 8 and updated in G10 |
+| 5 green runs in a row | `python run.py` -> 5/5 with the updated and new tests | PASS: 5/5 runs, 91/91 each (`reports/e2e-runs.md`, 2026-11-20 15:43) |
+| AC coverage / independence | coverage script exits 0 (AC-F1-01..22); suite green with `--reverse` | PASS: exit 0, 22/22 ACs covered; `--reverse` 91 passed; no sleep; all 91 tests have an exchange log and an AC cell in the report |
+
+### CR-01 run results
+| Date | Command | Environment | Result |
+|---|---|---|---|
+| 2026-11-20 15:26 | `python run.py --runs 1` (regression: unchanged F1 suite) | Windows 11, Python 3.14.10, pytest 9.2.0, pyserial 3.5 | 2 failed, 71 passed: expected, see `reports/regression-cr01.md` |
+| 2026-11-20 15:43 | `python run.py` (5 consecutive suite runs) | same | **5/5 PASS**: 91 passed, 0 failed, 0 skipped per run, about 30-32 s each |
+| 2026-11-20 | `pytest tests/e2e --reverse` | same | 91 passed |
+
+All 22 acceptance criteria (AC-F1-01..16 as superseded by section 8, AC-F1-17..22) pass.

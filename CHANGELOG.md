@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.2.0] - 2026-11-20 - Phase 2: CR-01 toggle rate limit
+
+**Spec:** `specs/2026-11-20-f1-relay-control/requirements.md` section 8 (Changes, CR-01); plan G8-G11;
+validation.md section "CR-01". **Result:** all 22 ACs pass; `python run.py` 5/5 runs green, 91/91 tests each.
+
+### Added
+- Defense mechanism: a toggle (an accepted `ON`/`OFF` that changes the state) less than 2.000 s after the
+  previous toggle replies `BUSY` (host exit code 1); time comes from the simulator clock, compared in whole ms.
+  No-op commands, `STATUS` and rejected commands never get `BUSY` and never restart the window; `RESET` clears
+  it; `SET_STATE` leaves it alone; `BUSY` is error-priority rule 6 (after `ERR HW_FAULT`).
+- New acceptance criteria AC-F1-17..22 with 18 E2E test cases, using controlled simulator time
+  (`control.advance()`, boundary pair 1.999 / 2.000 s, no sleep).
+
+### Changed
+- AC-F1-14 (superseded in section 8): the quick sequence `ON`, `OFF`, `ON`, `STATUS` now replies
+  `OK`, `BUSY`, `OK`, `STATUS ON`.
+- AC-F1-13 (superseded in section 8 after the regression run): its test advances the clock 2.0 s
+  before the second toggle; the AC text is unchanged.
+
+### Regression
+- The unchanged F1 suite run against CR-01 showed 2 of 73 tests failing (AC-F1-13, AC-F1-14) and 71
+  unaffected: `reports/regression-cr01.md` (+ `reports/regression-cr01.html`). Both were updated only after
+  the requirements change was approved.
+
 ## [0.1.0] - 2026-11-20 - Phase 1: Simulator + F1 (relay control and status)
 
 **Spec:** `specs/2026-11-20-f1-relay-control/` (requirements -> plan -> validation).

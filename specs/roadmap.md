@@ -9,7 +9,8 @@ Simulator with control API and controlled clock, `relay-host` CLI, commands ON /
 handling and fault injection. Skill `e2e-test-conventions` v1 is in place before the first E2E test;
 skill evals are run on v1 and on the refined version (`reports/skill-evals.md`); this is also required to close the phase.
 
-## Phase 2: Change request CR-01 (toggle rate limit) - IN PROGRESS
+## Phase 2: Change request CR-01 (toggle rate limit) - DONE 2026-11-20
+Done: `python run.py` 5/5 green (91 tests, AC-F1-01..22), regression recorded, validation.md CR-01 complete, CHANGELOG 0.2.0.
 A toggle (an accepted `ON`/`OFF` that changes the state) less than 2 s after the previous toggle is
 rejected with `BUSY`; the exact rules are in F1 `requirements.md` section 8 (Changes, CR-01).
 Regression results: `reports/regression-cr01.md`.
