@@ -1,0 +1,65 @@
+{
+  "skill_name": "e2e-test-conventions",
+  "notes": "Runs: v1 (first draft) and v2 (refined). Results go to reports/skill-evals.md. Cases 1-4 must trigger the skill; case 5 must not.",
+  "evals": [
+    {
+      "id": 1,
+      "should_trigger": true,
+      "prompt": "Write the E2E test for AC-F1-07 (empty line) from specs/2026-11-20-f1-relay-control.",
+      "expectations": [
+        "Skill e2e-test-conventions is invoked",
+        "Test name starts with test_ac_f1_07_ and has @pytest.mark.ac(\"AC-F1-07\")",
+        "Uses host(\"\") fixture (not raw socket, no src imports)",
+        "Asserts stdout == 'ERR EMPTY' and exit_code == 1",
+        "Asserts state unchanged via control.get_state() for an explicitly set initial state"
+      ]
+    },
+    {
+      "id": 2,
+      "should_trigger": true,
+      "prompt": "Add E2E tests for AC-F1-10: hardware fault injection, including the error-priority part.",
+      "expectations": [
+        "Skill e2e-test-conventions is invoked",
+        "Injects fault via control.fault('HW_FAULT')",
+        "Covers ON and OFF -> ERR HW_FAULT, exit 1, state unchanged",
+        "Covers STATUS still working and invalid lines ('on', '') getting their own error",
+        "Covers recovery after control.fault('NONE')",
+        "No sleep, marker AC-F1-10 on every test"
+      ]
+    },
+    {
+      "id": 3,
+      "should_trigger": true,
+      "prompt": "AC-F1-11 test is flaky on CI: sometimes the host takes longer than expected. Fix the test for the silent device.",
+      "expectations": [
+        "Skill e2e-test-conventions is invoked",
+        "Does not loosen the AC bound (timeout + 0.5 s) or skip/xfail/delete the test without a requirements change",
+        "Uses control.silence(True) and a short host timeout",
+        "No sleep / no retry loops hiding failures",
+        "Restores via SILENCE OFF assertion or relies on autouse reset, and asserts recovery"
+      ]
+    },
+    {
+      "id": 4,
+      "should_trigger": true,
+      "prompt": "CR-01 is accepted: relay cannot be toggled more than once per 2 s (BUSY). Write E2E tests for the new AC, boundary 2.000 s allowed.",
+      "expectations": [
+        "Skill e2e-test-conventions is invoked",
+        "Uses control.advance(...) on the manual clock, never time.sleep",
+        "Tests boundary 1.999 s -> BUSY (exit 1) and 2.000 s -> OK",
+        "Covers BUSY not restarting the window and repeated same-state command not counting as toggle",
+        "Points out that requirements.md needs the CR AC IDs first if missing, instead of inventing IDs"
+      ]
+    },
+    {
+      "id": 5,
+      "should_trigger": false,
+      "prompt": "Write a unit test for the ManualClock class in src/relay_sim/clock.py: advance() must reject negative values.",
+      "expectations": [
+        "Skill e2e-test-conventions is NOT invoked",
+        "Writes a plain unit test (e.g. tests/unit/) that imports relay_sim.clock directly",
+        "Does not add AC markers or E2E fixtures"
+      ]
+    }
+  ]
+}
