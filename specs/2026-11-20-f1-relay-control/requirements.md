@@ -120,3 +120,49 @@ If a port cannot be opened, it prints one `ERROR:` line to stderr and exits with
 ## 7. Out of scope
 Persistent configuration, several relays, concurrent clients, an interactive host shell, non-ASCII or
 binary payloads beyond rejecting them, security, and real serial hardware.
+
+## 8. Changes
+
+### CR-01: Toggle rate limit (Phase 2)
+Status: approved 2026-11-20 | Source: change request "relay can't be toggled faster than
+every 2 s; a second toggle within 2 s returns `BUSY`; tests use controlled simulator time".
+Sections 1-7 above are kept as written; this section adds rules and states which of their items it supersedes.
+
+**Definitions**
+- **Toggle:** an `ON` or `OFF` that is accepted and **changes** the relay state (`OFF -> ON` or `ON -> OFF`).
+- **Window:** the 2.000 s after the last toggle, measured on the simulator clock (manual clock in tests,
+  monotonic wall time in `real` mode) and compared in whole milliseconds.
+
+**Rules**
+1. A toggle requested less than 2.000 s after the previous toggle is rejected: reply `BUSY`, state unchanged,
+   host exit code 1. At 2.000 s or later it is accepted (`OK`).
+2. These never get `BUSY` and never start or restart the window: `STATUS`; `ON` while `ON` / `OFF` while `OFF`
+   (still `OK`, no change); any rejected command (`BUSY`, `ERR ...`).
+3. The first toggle after startup or `RESET` is always allowed; `RESET` clears the window.
+4. `SET_STATE` (control API) neither starts nor clears the window.
+5. Error priority (section 3) gets rule 6 after `ERR HW_FAULT`: a toggle inside the window -> `BUSY`.
+   Silence, empty, too long, unknown and `HW_FAULT` keep priority over `BUSY`.
+
+**Supersedes in sections 1-7**
+- Section 2.1 "F1 has no time-dependent behavior": the clock now drives the window.
+- Section 3: the table gains the row "`ON`/`OFF` that would toggle inside the window -> `BUSY`, no effect".
+- Section 4: `BUSY` is no longer "reserved"; it is the reply of rule 1 (exit code 1, as already defined).
+- **AC-F1-14** (new expectation): the quick sequence `ON`, `OFF`, `ON`, `STATUS` with no clock advance
+  replies `OK`, `BUSY`, `OK`, `STATUS ON` (the second call is a toggle 0 s after the first; the third is a
+  no-op because the relay is still `ON`); final state `ON`.
+- Any other F1 AC whose test toggles twice within 2 s is listed by the regression run
+  (`reports/regression-cr01.md`) and updated here before its test is changed.
+
+**New acceptance criteria**
+
+| ID | Given / When / Then |
+|---|---|
+| AC-F1-17 | Given a toggle at clock t, a toggle at t + 0 s and at t + 1.999 s replies `BUSY` with exit code 1, and the state is unchanged. |
+| AC-F1-18 | Given a toggle at clock t, a toggle at exactly t + 2.000 s, or later, replies `OK` with exit code 0 and the state changes. |
+| AC-F1-19 | A `BUSY` reply does not restart the window: toggle at t, `BUSY` at t + 1.5 s, then a toggle at t + 2.0 s replies `OK`. |
+| AC-F1-20 | Inside the window, `STATUS` and a no-op `ON`/`OFF` reply as in F1 (`STATUS ...` / `OK`, exit 0) and do not restart the window: a toggle at t + 2.0 s replies `OK`. |
+| AC-F1-21 | The first toggle after `RESET` is allowed even if a toggle happened less than 2 s before the reset; `SET_STATE` does not start a window (a toggle right after it replies `OK`). |
+| AC-F1-22 | Priority: with `HW_FAULT` active inside the window, a toggle replies `ERR HW_FAULT`; invalid lines keep their own errors (`ERR EMPTY`, `ERR TOO_LONG`, `ERR UNKNOWN_CMD`), never `BUSY`. |
+
+**Edge cases:** the boundary pair 1.999 s / 2.000 s (AC-F1-17/18); a window reached in several `ADVANCE`
+steps (AC-F1-18); both directions `OFF -> ON` and `ON -> OFF` (AC-F1-17/18).

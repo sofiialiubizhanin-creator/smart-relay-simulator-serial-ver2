@@ -9,8 +9,9 @@ Simulator with control API and controlled clock, `relay-host` CLI, commands ON /
 handling and fault injection. Skill `e2e-test-conventions` v1 is in place before the first E2E test;
 skill evals are run on v1 and on the refined version (`reports/skill-evals.md`); this is also required to close the phase.
 
-## Phase 2: Change request CR-01 (toggle rate limit)
+## Phase 2: Change request CR-01 (toggle rate limit) - IN PROGRESS
 A toggle (an accepted `ON`/`OFF` that changes the state) less than 2 s after the previous toggle is
-rejected with `BUSY`; the exact rules are defined in the CR-01 requirements change.
+rejected with `BUSY`; the exact rules are in F1 `requirements.md` section 8 (Changes, CR-01).
+Regression results: `reports/regression-cr01.md`.
 Before changing any F1 test, a regression run shows which F1 tests break; the F1 requirements get a
 `Changes` section, and only then are the tests updated.
