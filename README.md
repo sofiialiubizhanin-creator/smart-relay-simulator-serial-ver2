@@ -42,7 +42,7 @@ Terminal 2 (Linux/macOS: `.venv/bin/relay-host`):
 ```
 `$LASTEXITCODE` (PowerShell) or `echo $?` (bash) shows the exit code of the last command.
 `relay-host [--host H] [--port P] [--timeout S] COMMAND`. Exit codes: 0 `OK`/`STATUS`, 1 any other reply
-(`ERR ...`), 2 cannot connect or wrong usage, 3 no response within the timeout.
+(`ERR ...`, `BUSY`), 2 cannot connect or wrong usage, 3 no response within the timeout.
 
 `relay-sim [--host H] [--port P] [--control-port P] [--clock real|manual] [--log FILE]` prints
 `READY serial=<p> control=<p>` once it is listening. `localhost` (default) listens on 127.0.0.1 and ::1.

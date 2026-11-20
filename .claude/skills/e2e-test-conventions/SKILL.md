@@ -68,4 +68,4 @@ Details and copy-ready patterns: `references/fixtures.md`, `references/patterns.
 - [ ] Negative/edge cases from requirements "Edge cases" are covered.
 - [ ] No `sleep`, no `src` imports, no hard-coded ports, no order dependence.
 - [ ] Green in normal order and with `pytest --reverse`; once `run.py` exists (plan G6): `python run.py` (5 runs).
-- [ ] `validation.md`: fill the **Test(s)** cell of each AC you covered; the **Result** cell is filled only during validation (G7).
+- [ ] `validation.md`: fill the **Test(s)** cell of each AC you covered; the **Result** cell is filled only in the validation step (G7 for F1, G11 for CR-01).
