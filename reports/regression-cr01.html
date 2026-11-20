@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">e2e-run-1.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">e2e-run-1.html</h1>
+    <p>Report generated on 20-Nov-2026 at 15:27:07 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.2.0</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="5">No results found. Check the filters.</td>
+        </tr>
+      </tbody>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="5">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left">&lt;</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">&gt;</div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">73 tests took 00:00:21.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" >
+            <span class="failed">2 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
+            <span class="passed">71 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
+            <span class="rerun">0 Reruns</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
+            <span class="retried">0 Retried,</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="ac">AC</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.14.10&#34;, &#34;Platform&#34;: &#34;Windows-11-10.0.26200-SP0&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.2.0&#34;, &#34;pluggy&#34;: &#34;1.7.0&#34;}, &#34;Plugins&#34;: {&#34;html&#34;: &#34;4.2.0&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;}}, &#34;tests&#34;: {&#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_01_on_from_off_replies_ok&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-01&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_01_on_from_off_replies_ok&#34;, &#34;duration&#34;: &#34;340 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_01_on_from_off_replies_ok&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;340 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:46.248 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:46.249 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.250 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:46.250 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.251 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:46.444 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:26:46.445 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:26:46.457 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.206s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:46.457 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:46.457 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_02_off_from_on_replies_ok&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-02&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_02_off_from_on_replies_ok&#34;, &#34;duration&#34;: &#34;179 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_02_off_from_on_replies_ok&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;179 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:46.476 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:46.477 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.478 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:46.478 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.478 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:46.628 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:26:46.628 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:26:46.640 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.162s send_to_end=0.0&amp;quot;\r\n2026-11-20T15:26:46.641 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:46.641 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_off_after_startup&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-03&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_off_after_startup&#34;, &#34;duration&#34;: &#34;285 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_off_after_startup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;285 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:46.657 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:46.657 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.769 TEST &amp;gt; &amp;quot;relay-host --port 62509 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:46.911 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:26:46.912 HOST RX b&amp;#x27;STATUS OFF\\n&amp;#x27;\r\n2026-11-20T15:26:46.924 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS OFF&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.155s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:46.924 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:46.925 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_off_after_reset&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-03&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_off_after_reset&#34;, &#34;duration&#34;: &#34;227 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_off_after_reset&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;227 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:46.942 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:46.942 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.943 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:46.944 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.944 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:46.945 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:46.945 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:47.139 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:26:47.140 HOST RX b&amp;#x27;STATUS OFF\\n&amp;#x27;\r\n2026-11-20T15:26:47.154 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS OFF&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.208s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:47.154 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:47.155 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_reports_current_state[OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-03&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_reports_current_state[OFF]&#34;, &#34;duration&#34;: &#34;199 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_reports_current_state[OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;199 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:47.161 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:47.161 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.162 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:47.163 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.163 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:47.340 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:26:47.341 HOST RX b&amp;#x27;STATUS OFF\\n&amp;#x27;\r\n2026-11-20T15:26:47.353 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS OFF&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.190s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:47.354 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:47.354 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_reports_current_state[ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-03&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_reports_current_state[ON]&#34;, &#34;duration&#34;: &#34;188 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-03&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_03_status_reports_current_state[ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;188 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:47.372 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:47.372 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.373 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:47.373 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.374 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:47.529 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:26:47.530 HOST RX b&amp;#x27;STATUS ON\\n&amp;#x27;\r\n2026-11-20T15:26:47.542 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS ON&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.168s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:47.542 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:47.543 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_04_repeated_command_replies_ok_without_change[OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-04&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_04_repeated_command_replies_ok_without_change[OFF]&#34;, &#34;duration&#34;: &#34;168 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_04_repeated_command_replies_ok_without_change[OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;168 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:47.563 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:47.564 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.565 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:47.565 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.566 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:47.698 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:26:47.699 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:26:47.711 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.145s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:47.711 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:47.712 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_04_repeated_command_replies_ok_without_change[ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-04&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_04_repeated_command_replies_ok_without_change[ON]&#34;, &#34;duration&#34;: &#34;162 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_04_repeated_command_replies_ok_without_change[ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;162 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:47.723 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:47.724 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.725 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:47.725 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.726 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:47.861 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:26:47.862 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:26:47.874 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.148s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:47.874 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:47.874 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[TOGGLE-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-05&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[TOGGLE-OFF]&#34;, &#34;duration&#34;: &#34;167 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[TOGGLE-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;167 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:47.878 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:47.878 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.879 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:47.880 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:47.880 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;TOGGLE&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:48.028 HOST TX b&amp;#x27;TOGGLE\\n&amp;#x27;\r\n2026-11-20T15:26:48.029 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:48.042 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.161s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:48.042 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:48.042 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[TOGGLE-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-05&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[TOGGLE-ON]&#34;, &#34;duration&#34;: &#34;180 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[TOGGLE-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;180 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:48.060 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:48.061 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.062 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:48.063 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.063 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;TOGGLE&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:48.209 HOST TX b&amp;#x27;TOGGLE\\n&amp;#x27;\r\n2026-11-20T15:26:48.209 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:48.223 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.160s send_to_end=0.0&amp;quot;\r\n2026-11-20T15:26:48.224 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:48.224 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[RESET-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-05&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[RESET-OFF]&#34;, &#34;duration&#34;: &#34;168 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[RESET-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;168 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:48.230 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:48.231 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.232 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:48.232 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.232 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;RESET&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:48.379 HOST TX b&amp;#x27;RESET\\n&amp;#x27;\r\n2026-11-20T15:26:48.380 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:48.392 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.159s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:48.392 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:48.393 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[RESET-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-05&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[RESET-ON]&#34;, &#34;duration&#34;: &#34;187 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[RESET-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;187 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:48.410 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:48.411 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.412 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:48.413 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.413 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;RESET&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:48.564 HOST TX b&amp;#x27;RESET\\n&amp;#x27;\r\n2026-11-20T15:26:48.564 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:48.580 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.166s send_to_end=0.0&amp;quot;\r\n2026-11-20T15:26:48.580 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:48.581 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[X-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-05&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[X-OFF]&#34;, &#34;duration&#34;: &#34;194 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[X-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;194 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:48.594 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:48.595 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.596 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:48.596 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.597 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;X&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:48.760 HOST TX b&amp;#x27;X\\n&amp;#x27;\r\n2026-11-20T15:26:48.761 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:48.775 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.178s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:48.776 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:48.776 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[X-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-05&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[X-ON]&#34;, &#34;duration&#34;: &#34;169 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_05_unknown_command_rejected[X-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;169 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:48.793 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:48.794 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.795 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:48.795 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.796 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;X&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:48.931 HOST TX b&amp;#x27;X\\n&amp;#x27;\r\n2026-11-20T15:26:48.932 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:48.944 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.148s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:48.945 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:48.946 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[on-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[on-OFF]&#34;, &#34;duration&#34;: &#34;187 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[on-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;187 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:48.962 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:48.963 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.964 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:48.964 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:48.965 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;on&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:49.119 HOST TX b&amp;#x27;on\\n&amp;#x27;\r\n2026-11-20T15:26:49.120 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:49.133 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.168s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:49.133 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:49.134 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[on-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[on-ON]&#34;, &#34;duration&#34;: &#34;193 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[on-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;193 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:49.144 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:49.144 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.145 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:49.145 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.146 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;on&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:49.312 HOST TX b&amp;#x27;on\\n&amp;#x27;\r\n2026-11-20T15:26:49.313 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:49.326 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.180s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:49.326 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:49.327 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[off-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[off-OFF]&#34;, &#34;duration&#34;: &#34;180 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[off-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;180 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:49.343 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:49.344 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.345 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:49.345 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.346 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;off&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:49.493 HOST TX b&amp;#x27;off\\n&amp;#x27;\r\n2026-11-20T15:26:49.494 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:49.507 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.161s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:49.507 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:49.507 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[off-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[off-ON]&#34;, &#34;duration&#34;: &#34;171 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[off-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;171 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:49.527 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:49.528 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.529 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:49.529 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.529 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;off&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:49.666 HOST TX b&amp;#x27;off\\n&amp;#x27;\r\n2026-11-20T15:26:49.666 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:49.679 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.149s send_to_end=0.0&amp;quot;\r\n2026-11-20T15:26:49.679 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:49.679 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[Off-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[Off-OFF]&#34;, &#34;duration&#34;: &#34;167 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[Off-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;167 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:49.693 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:49.694 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.695 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:49.695 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.696 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;Off&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:49.832 HOST TX b&amp;#x27;Off\\n&amp;#x27;\r\n2026-11-20T15:26:49.833 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:49.846 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.150s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:49.846 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:49.847 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[Off-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[Off-ON]&#34;, &#34;duration&#34;: &#34;164 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[Off-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;164 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:49.860 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:49.861 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.862 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:49.862 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:49.862 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;Off&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:49.998 HOST TX b&amp;#x27;Off\\n&amp;#x27;\r\n2026-11-20T15:26:49.999 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:50.011 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.149s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:50.012 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:50.012 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[oN-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[oN-OFF]&#34;, &#34;duration&#34;: &#34;181 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[oN-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;181 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:50.028 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:50.029 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.029 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:50.030 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.030 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;oN&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:50.180 HOST TX b&amp;#x27;oN\\n&amp;#x27;\r\n2026-11-20T15:26:50.181 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:50.193 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.163s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:50.193 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:50.194 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[oN-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[oN-ON]&#34;, &#34;duration&#34;: &#34;177 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[oN-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;177 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:50.212 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:50.215 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.216 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:50.216 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.217 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;oN&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:50.358 HOST TX b&amp;#x27;oN\\n&amp;#x27;\r\n2026-11-20T15:26:50.359 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:50.371 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.154s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:50.371 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:50.372 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[status-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[status-OFF]&#34;, &#34;duration&#34;: &#34;177 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[status-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;177 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:50.397 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:50.397 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.398 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:50.399 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.399 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;status&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:50.536 HOST TX b&amp;#x27;status\\n&amp;#x27;\r\n2026-11-20T15:26:50.537 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:50.549 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.150s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:50.549 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:50.550 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[status-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-06&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[status-ON]&#34;, &#34;duration&#34;: &#34;162 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_06_non_uppercase_command_rejected[status-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;162 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:50.561 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:50.562 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.563 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:50.563 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.563 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;status&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:50.699 HOST TX b&amp;#x27;status\\n&amp;#x27;\r\n2026-11-20T15:26:50.700 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:50.712 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.149s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:50.712 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:50.713 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_07_empty_line_replies_err_empty[OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-07&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_07_empty_line_replies_err_empty[OFF]&#34;, &#34;duration&#34;: &#34;168 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_07_empty_line_replies_err_empty[OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;168 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:50.725 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:50.726 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.727 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:50.728 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.728 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:50.866 HOST TX b&amp;#x27;\\n&amp;#x27;\r\n2026-11-20T15:26:50.867 HOST RX b&amp;#x27;ERR EMPTY\\n&amp;#x27;\r\n2026-11-20T15:26:50.880 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR EMPTY&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.152s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:50.880 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:50.881 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_07_empty_line_replies_err_empty[ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-07&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_07_empty_line_replies_err_empty[ON]&#34;, &#34;duration&#34;: &#34;180 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_07_empty_line_replies_err_empty[ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;180 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:50.892 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:50.893 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.894 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:50.894 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:50.895 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:51.042 HOST TX b&amp;#x27;\\n&amp;#x27;\r\n2026-11-20T15:26:51.043 HOST RX b&amp;#x27;ERR EMPTY\\n&amp;#x27;\r\n2026-11-20T15:26:51.061 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR EMPTY&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.166s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:51.061 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:51.062 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[leading-space-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[leading-space-OFF]&#34;, &#34;duration&#34;: &#34;163 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[leading-space-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;163 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:51.066 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:51.066 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.067 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:51.068 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.068 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27; ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:51.207 HOST TX b&amp;#x27; ON\\n&amp;#x27;\r\n2026-11-20T15:26:51.208 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:51.225 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.157s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:51.225 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:51.226 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[leading-space-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[leading-space-ON]&#34;, &#34;duration&#34;: &#34;153 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[leading-space-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;153 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:51.230 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:51.230 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.231 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:51.231 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.232 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27; ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:51.366 HOST TX b&amp;#x27; ON\\n&amp;#x27;\r\n2026-11-20T15:26:51.367 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:51.379 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.147s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:51.380 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:51.380 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[trailing-space-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[trailing-space-OFF]&#34;, &#34;duration&#34;: &#34;170 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[trailing-space-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;170 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:51.392 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:51.392 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.394 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:51.394 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.394 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON &amp;#x27;&amp;quot;\r\n2026-11-20T15:26:51.537 HOST TX b&amp;#x27;ON \\n&amp;#x27;\r\n2026-11-20T15:26:51.538 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:51.550 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.156s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:51.551 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:51.551 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[trailing-space-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[trailing-space-ON]&#34;, &#34;duration&#34;: &#34;172 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[trailing-space-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;172 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:51.573 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:51.574 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.575 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:51.575 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.575 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON &amp;#x27;&amp;quot;\r\n2026-11-20T15:26:51.709 HOST TX b&amp;#x27;ON \\n&amp;#x27;\r\n2026-11-20T15:26:51.710 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:51.724 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.148s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:51.724 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:51.725 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[inner-space-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[inner-space-OFF]&#34;, &#34;duration&#34;: &#34;193 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[inner-space-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;193 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:51.746 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:51.747 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.748 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:51.748 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.748 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;O N&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:51.903 HOST TX b&amp;#x27;O N\\n&amp;#x27;\r\n2026-11-20T15:26:51.904 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:51.917 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.169s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:51.918 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:51.918 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[inner-space-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[inner-space-ON]&#34;, &#34;duration&#34;: &#34;175 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[inner-space-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;175 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:51.941 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:51.941 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.942 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:51.943 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:51.943 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;O N&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:52.079 HOST TX b&amp;#x27;O N\\n&amp;#x27;\r\n2026-11-20T15:26:52.080 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:52.093 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.150s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:52.094 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:52.094 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[tab-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[tab-OFF]&#34;, &#34;duration&#34;: &#34;180 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[tab-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;180 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:52.110 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:52.111 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.112 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:52.112 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.112 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON\\\\t&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:52.260 HOST TX b&amp;#x27;ON\\t\\n&amp;#x27;\r\n2026-11-20T15:26:52.261 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:52.274 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.161s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:52.274 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:52.274 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[tab-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[tab-ON]&#34;, &#34;duration&#34;: &#34;199 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[tab-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;199 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:52.293 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:52.294 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.295 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:52.296 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.296 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON\\\\t&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:52.460 HOST TX b&amp;#x27;ON\\t\\n&amp;#x27;\r\n2026-11-20T15:26:52.461 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:52.474 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.178s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:52.474 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:52.475 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[cr-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[cr-OFF]&#34;, &#34;duration&#34;: &#34;183 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[cr-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;183 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:52.494 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:52.494 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.495 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:52.496 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.496 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON\\\\r&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:52.644 HOST TX b&amp;#x27;ON\\r\\n&amp;#x27;\r\n2026-11-20T15:26:52.645 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:52.658 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.162s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:52.658 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:52.659 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[cr-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[cr-ON]&#34;, &#34;duration&#34;: &#34;182 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[cr-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;182 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:52.677 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:52.678 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.679 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:52.679 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.679 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON\\\\r&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:52.827 HOST TX b&amp;#x27;ON\\r\\n&amp;#x27;\r\n2026-11-20T15:26:52.828 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:52.840 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.161s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:52.841 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:52.841 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[only-spaces-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[only-spaces-OFF]&#34;, &#34;duration&#34;: &#34;175 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[only-spaces-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;175 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:52.860 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:52.861 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.862 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:52.862 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:52.862 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;   &amp;#x27;&amp;quot;\r\n2026-11-20T15:26:53.001 HOST TX b&amp;#x27;   \\n&amp;#x27;\r\n2026-11-20T15:26:53.002 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:53.016 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.153s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:53.016 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:53.017 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[only-spaces-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-08&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[only-spaces-ON]&#34;, &#34;duration&#34;: &#34;187 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_08_whitespace_or_extra_char_rejected[only-spaces-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;187 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:53.031 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:53.032 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.033 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:53.033 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.034 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;   &amp;#x27;&amp;quot;\r\n2026-11-20T15:26:53.191 HOST TX b&amp;#x27;   \\n&amp;#x27;\r\n2026-11-20T15:26:53.192 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:53.204 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.170s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:53.204 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:53.205 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-unknown-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-unknown-OFF]&#34;, &#34;duration&#34;: &#34;168 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-unknown-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;168 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:53.223 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:53.224 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.225 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:53.225 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.226 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:53.360 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\n&amp;#x27;\r\n2026-11-20T15:26:53.361 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:53.373 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.147s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:53.373 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:53.373 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-unknown-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-unknown-ON]&#34;, &#34;duration&#34;: &#34;171 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-unknown-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;171 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:53.396 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:53.397 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.398 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:53.398 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.398 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:53.532 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\n&amp;#x27;\r\n2026-11-20T15:26:53.532 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:53.545 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.146s send_to_end=0.0&amp;quot;\r\n2026-11-20T15:26:53.545 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:53.545 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-OFF]&#34;, &#34;duration&#34;: &#34;185 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;185 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:53.572 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:53.573 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.574 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:53.575 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.576 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:53.717 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\n&amp;#x27;\r\n2026-11-20T15:26:53.718 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:53.730 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.154s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:53.730 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:53.731 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-ON]&#34;, &#34;duration&#34;: &#34;177 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;177 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:53.745 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:53.746 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.747 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:53.747 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.747 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:53.894 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\n&amp;#x27;\r\n2026-11-20T15:26:53.895 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:53.908 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.160s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:53.908 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:53.909 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-with-cr-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-with-cr-OFF]&#34;, &#34;duration&#34;: &#34;401 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-with-cr-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;401 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:53.926 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:53.926 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.928 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:53.928 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:53.929 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\\r&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:54.288 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\r\\n&amp;#x27;\r\n2026-11-20T15:26:54.289 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:54.309 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.380s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:54.309 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:54.310 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-with-cr-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-with-cr-ON]&#34;, &#34;duration&#34;: &#34;192 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[32B-with-cr-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;192 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:54.319 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:54.319 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.321 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:54.321 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.321 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\\r&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:54.489 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\r\\n&amp;#x27;\r\n2026-11-20T15:26:54.490 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:54.505 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.183s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:54.505 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:54.506 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-with-cr-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-with-cr-OFF]&#34;, &#34;duration&#34;: &#34;201 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-with-cr-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;201 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:54.510 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:54.512 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.513 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:54.513 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.513 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\\r&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:54.689 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\r\\n&amp;#x27;\r\n2026-11-20T15:26:54.689 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:54.707 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.193s send_to_end=0.0&amp;quot;\r\n2026-11-20T15:26:54.707 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:54.708 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-with-cr-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-with-cr-ON]&#34;, &#34;duration&#34;: &#34;205 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-with-cr-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;205 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:54.712 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:54.712 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.713 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:54.714 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.714 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\\r&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:54.891 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\r\\n&amp;#x27;\r\n2026-11-20T15:26:54.892 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:54.913 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.198s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:54.913 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:54.914 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-lowercase-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-lowercase-OFF]&#34;, &#34;duration&#34;: &#34;193 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-lowercase-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;193 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:54.927 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:54.927 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.929 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:54.929 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:54.930 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ooooooooooooooooooooooooooooooooo&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:55.094 HOST TX b&amp;#x27;ooooooooooooooooooooooooooooooooo\\n&amp;#x27;\r\n2026-11-20T15:26:55.095 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:55.107 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.177s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:55.108 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:55.108 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-lowercase-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-lowercase-ON]&#34;, &#34;duration&#34;: &#34;216 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-lowercase-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;216 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:55.126 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:55.127 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.129 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:55.129 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.130 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ooooooooooooooooooooooooooooooooo&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:55.312 HOST TX b&amp;#x27;ooooooooooooooooooooooooooooooooo\\n&amp;#x27;\r\n2026-11-20T15:26:55.313 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:55.325 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.195s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:55.325 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:55.325 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-whitespace-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-whitespace-OFF]&#34;, &#34;duration&#34;: &#34;188 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-whitespace-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;188 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:55.329 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:55.330 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.331 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:55.331 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.332 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON                               &amp;#x27;&amp;quot;\r\n2026-11-20T15:26:55.492 HOST TX b&amp;#x27;ON                               \\n&amp;#x27;\r\n2026-11-20T15:26:55.494 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:55.513 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.181s send_to_end=0.002&amp;quot;\r\n2026-11-20T15:26:55.513 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:55.514 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-whitespace-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-09&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-whitespace-ON]&#34;, &#34;duration&#34;: &#34;179 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_09_length_limit[33B-whitespace-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;179 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:55.518 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:55.518 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.519 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:55.520 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.520 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON                               &amp;#x27;&amp;quot;\r\n2026-11-20T15:26:55.679 HOST TX b&amp;#x27;ON                               \\n&amp;#x27;\r\n2026-11-20T15:26:55.679 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:55.693 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.172s send_to_end=0.0&amp;quot;\r\n2026-11-20T15:26:55.693 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:55.694 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[ON-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[ON-OFF]&#34;, &#34;duration&#34;: &#34;175 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[ON-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;175 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:55.710 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:55.711 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.712 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:55.712 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.712 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:55.712 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.713 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:55.855 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:26:55.856 HOST RX b&amp;#x27;ERR HW_FAULT\\n&amp;#x27;\r\n2026-11-20T15:26:55.869 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR HW_FAULT&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.156s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:55.870 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:55.870 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[ON-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[ON-ON]&#34;, &#34;duration&#34;: &#34;160 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[ON-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;160 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:55.876 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:55.877 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.878 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:55.878 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.879 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:55.879 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:55.879 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:56.017 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:26:56.018 HOST RX b&amp;#x27;ERR HW_FAULT\\n&amp;#x27;\r\n2026-11-20T15:26:56.030 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR HW_FAULT&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.151s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:56.030 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:56.031 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[OFF-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[OFF-OFF]&#34;, &#34;duration&#34;: &#34;177 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[OFF-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;177 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:56.045 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:56.046 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.047 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:56.047 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.047 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:56.047 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.048 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:56.195 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:26:56.196 HOST RX b&amp;#x27;ERR HW_FAULT\\n&amp;#x27;\r\n2026-11-20T15:26:56.208 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR HW_FAULT&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.160s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:56.208 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:56.209 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[OFF-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[OFF-ON]&#34;, &#34;duration&#34;: &#34;201 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_blocks_on_off[OFF-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;201 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:56.226 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:56.227 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.228 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:56.229 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.229 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:56.229 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.229 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:56.396 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:26:56.397 HOST RX b&amp;#x27;ERR HW_FAULT\\n&amp;#x27;\r\n2026-11-20T15:26:56.410 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR HW_FAULT&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.180s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:56.410 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:56.410 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_status_still_works[OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_status_still_works[OFF]&#34;, &#34;duration&#34;: &#34;155 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_status_still_works[OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;155 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:56.415 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:56.416 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.417 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:56.417 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.417 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:56.418 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.418 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:56.552 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:26:56.553 HOST RX b&amp;#x27;STATUS OFF\\n&amp;#x27;\r\n2026-11-20T15:26:56.566 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS OFF&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.147s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:56.566 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:56.567 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_status_still_works[ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_status_still_works[ON]&#34;, &#34;duration&#34;: &#34;182 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_status_still_works[ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;182 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:56.592 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:56.592 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.594 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:56.594 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.594 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:56.595 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.595 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:56.735 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:26:56.736 HOST RX b&amp;#x27;STATUS ON\\n&amp;#x27;\r\n2026-11-20T15:26:56.749 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS ON&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.153s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:56.749 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:56.750 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[lowercase-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[lowercase-OFF]&#34;, &#34;duration&#34;: &#34;177 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[lowercase-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;177 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:56.763 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:56.763 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.764 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:56.764 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.765 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:56.765 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.765 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;on&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:56.913 HOST TX b&amp;#x27;on\\n&amp;#x27;\r\n2026-11-20T15:26:56.914 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:56.927 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.161s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:56.927 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:56.928 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[lowercase-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[lowercase-ON]&#34;, &#34;duration&#34;: &#34;199 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[lowercase-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;199 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:56.942 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:56.943 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.944 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:56.944 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.945 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:56.945 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:56.945 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;on&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:57.110 HOST TX b&amp;#x27;on\\n&amp;#x27;\r\n2026-11-20T15:26:57.111 HOST RX b&amp;#x27;ERR UNKNOWN_CMD\\n&amp;#x27;\r\n2026-11-20T15:26:57.128 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR UNKNOWN_CMD&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.183s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:57.129 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:57.129 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[empty-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[empty-OFF]&#34;, &#34;duration&#34;: &#34;177 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[empty-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;177 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:57.142 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:57.142 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.143 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:57.144 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.144 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:57.144 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.145 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:57.293 HOST TX b&amp;#x27;\\n&amp;#x27;\r\n2026-11-20T15:26:57.294 HOST RX b&amp;#x27;ERR EMPTY\\n&amp;#x27;\r\n2026-11-20T15:26:57.306 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR EMPTY&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.161s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:57.307 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:57.307 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[empty-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[empty-ON]&#34;, &#34;duration&#34;: &#34;201 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[empty-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;201 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:57.324 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:57.325 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.327 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:57.327 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.327 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:57.328 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.328 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:57.495 HOST TX b&amp;#x27;\\n&amp;#x27;\r\n2026-11-20T15:26:57.496 HOST RX b&amp;#x27;ERR EMPTY\\n&amp;#x27;\r\n2026-11-20T15:26:57.508 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR EMPTY&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.179s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:57.509 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:57.509 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[33B-OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[33B-OFF]&#34;, &#34;duration&#34;: &#34;165 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[33B-OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;165 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:57.512 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:57.513 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.514 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:57.514 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.514 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:57.515 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.515 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:57.661 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\n&amp;#x27;\r\n2026-11-20T15:26:57.662 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:57.674 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.159s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:57.675 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:57.675 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[33B-ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[33B-ON]&#34;, &#34;duration&#34;: &#34;181 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_hw_fault_invalid_line_keeps_own_error[33B-ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;181 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:57.692 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:57.693 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.693 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:57.694 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.694 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:57.694 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.695 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:57.843 HOST TX b&amp;#x27;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\n&amp;#x27;\r\n2026-11-20T15:26:57.844 HOST RX b&amp;#x27;ERR TOO_LONG\\n&amp;#x27;\r\n2026-11-20T15:26:57.857 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR TOO_LONG&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.162s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:57.857 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:57.858 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_recovers_after_fault_cleared[OFF]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_recovers_after_fault_cleared[OFF]&#34;, &#34;duration&#34;: &#34;417 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_recovers_after_fault_cleared[OFF]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;417 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:57.861 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:57.862 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.863 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:57.863 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.863 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:57.864 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:57.864 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:58.042 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:26:58.044 HOST RX b&amp;#x27;ERR HW_FAULT\\n&amp;#x27;\r\n2026-11-20T15:26:58.065 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR HW_FAULT&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.200s send_to_end=0.002&amp;quot;\r\n2026-11-20T15:26:58.065 CTRL &amp;gt; &amp;#x27;FAULT NONE&amp;#x27;\r\n2026-11-20T15:26:58.066 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.066 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:58.257 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:26:58.260 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:26:58.275 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.208s send_to_end=0.003&amp;quot;\r\n2026-11-20T15:26:58.275 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:58.275 CTRL &amp;lt; &amp;#x27;STATE ON&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_recovers_after_fault_cleared[ON]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-10&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_recovers_after_fault_cleared[ON]&#34;, &#34;duration&#34;: &#34;364 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_10_recovers_after_fault_cleared[ON]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;364 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:58.292 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:58.292 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.294 CTRL &amp;gt; &amp;#x27;SET_STATE ON&amp;#x27;\r\n2026-11-20T15:26:58.294 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.295 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:26:58.295 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.295 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:58.455 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:26:58.456 HOST RX b&amp;#x27;ERR HW_FAULT\\n&amp;#x27;\r\n2026-11-20T15:26:58.468 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR HW_FAULT&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.173s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:58.469 CTRL &amp;gt; &amp;#x27;FAULT NONE&amp;#x27;\r\n2026-11-20T15:26:58.469 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.469 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:58.626 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:26:58.627 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:26:58.639 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.170s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:26:58.640 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:58.640 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_11_silent_device_times_out_and_discards_command&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-11&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_11_silent_device_times_out_and_discards_command&#34;, &#34;duration&#34;: &#34;686 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-11&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_11_silent_device_times_out_and_discards_command&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;686 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:58.668 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:58.669 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.670 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:26:58.670 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.670 CTRL &amp;gt; &amp;#x27;SILENCE ON&amp;#x27;\r\n2026-11-20T15:26:58.671 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:58.671 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 0.5 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:58.809 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:26:59.311 HOST TIMEOUT b&amp;#x27;&amp;#x27;\r\n2026-11-20T15:26:59.326 TEST &amp;lt; &amp;quot;exit=3 stdout=&amp;#x27;&amp;#x27; stderr=&amp;#x27;ERROR: no response from device within 0.5s&amp;#x27; duration=0.655s send_to_end=0.502&amp;quot;\r\n2026-11-20T15:26:59.326 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:26:59.327 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_11_recovers_after_silence_off&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-11&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_11_recovers_after_silence_off&#34;, &#34;duration&#34;: &#34;822 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-11&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_11_recovers_after_silence_off&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;822 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:26:59.330 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:26:59.331 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:59.332 CTRL &amp;gt; &amp;#x27;SILENCE ON&amp;#x27;\r\n2026-11-20T15:26:59.332 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:59.333 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 0.5 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:26:59.473 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:26:59.975 HOST TIMEOUT b&amp;#x27;&amp;#x27;\r\n2026-11-20T15:26:59.994 TEST &amp;lt; &amp;quot;exit=3 stdout=&amp;#x27;&amp;#x27; stderr=&amp;#x27;ERROR: no response from device within 0.5s&amp;#x27; duration=0.661s send_to_end=0.502&amp;quot;\r\n2026-11-20T15:26:59.994 CTRL &amp;gt; &amp;#x27;SILENCE OFF&amp;#x27;\r\n2026-11-20T15:26:59.994 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:26:59.995 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:00.133 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:27:00.134 HOST RX b&amp;#x27;STATUS OFF\\n&amp;#x27;\r\n2026-11-20T15:27:00.149 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS OFF&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.154s send_to_end=0.001&amp;quot;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_12_unreachable_device_connection_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-12&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_12_unreachable_device_connection_error&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-12&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_12_unreachable_device_connection_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:27:00.160 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:27:00.161 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:00.162 TEST &amp;gt; &amp;quot;relay-host --port 62670 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:04.387 HOST ERROR &amp;#x27;cannot connect: Could not open port socket://localhost:62670: [WinError 10061] No connection could be made because the target machine actively refused it&amp;#x27;\r\n2026-11-20T15:27:04.399 TEST &amp;lt; &amp;quot;exit=2 stdout=&amp;#x27;&amp;#x27; stderr=&amp;#x27;ERROR: cannot connect to device: Could not open port socket://localhost:62670: [WinError 10061] No connection could be made because the target machine actively refused it&amp;#x27; duration=4.237s send_to_end=None&amp;quot;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_13_state_persists_across_host_calls&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;ac&#34;: &#34;AC-F1-13&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_13_state_persists_across_host_calls&#34;, &#34;duration&#34;: &#34;602 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-13&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_13_state_persists_across_host_calls&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;602 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;host = &amp;lt;function host.&amp;lt;locals&amp;gt;.run at 0x000001B8A7D010C0&amp;gt;\ncontrol = &amp;lt;helpers.ControlClient object at 0x000001B8A7CE1CD0&amp;gt;\n\n    @pytest.mark.ac(&amp;quot;AC-F1-13&amp;quot;)\n    def test_ac_f1_13_state_persists_across_host_calls(host, control):\n        assert host(&amp;quot;ON&amp;quot;).stdout == &amp;quot;OK&amp;quot;\n        assert host(&amp;quot;STATUS&amp;quot;).stdout == &amp;quot;STATUS ON&amp;quot;\n&amp;gt;       assert host(&amp;quot;OFF&amp;quot;).stdout == &amp;quot;OK&amp;quot;\nE       AssertionError: assert &amp;#x27;BUSY&amp;#x27; == &amp;#x27;OK&amp;#x27;\nE         \nE         - OK\nE         + BUSY\n\ntests\\e2e\\test_f1_relay_control.py:212: AssertionError\n\n------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:27:04.409 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:27:04.411 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:04.412 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:04.575 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:27:04.576 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:27:04.590 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.178s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:27:04.591 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:04.765 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:27:04.766 HOST RX b&amp;#x27;STATUS ON\\n&amp;#x27;\r\n2026-11-20T15:27:04.780 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS ON&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.189s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:27:04.780 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:04.968 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:27:04.978 HOST RX b&amp;#x27;BUSY\\n&amp;#x27;\r\n2026-11-20T15:27:05.001 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;BUSY&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.221s send_to_end=0.01&amp;quot;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_14_quick_sequence_without_clock_advance&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;ac&#34;: &#34;AC-F1-14&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_14_quick_sequence_without_clock_advance&#34;, &#34;duration&#34;: &#34;718 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-14&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_14_quick_sequence_without_clock_advance&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;718 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;host = &amp;lt;function host.&amp;lt;locals&amp;gt;.run at 0x000001B8A7D40EB0&amp;gt;\ncontrol = &amp;lt;helpers.ControlClient object at 0x000001B8A7CE37D0&amp;gt;\n\n    @pytest.mark.ac(&amp;quot;AC-F1-14&amp;quot;)\n    def test_ac_f1_14_quick_sequence_without_clock_advance(host, control):\n        replies = [host(cmd).stdout for cmd in (&amp;quot;ON&amp;quot;, &amp;quot;OFF&amp;quot;, &amp;quot;ON&amp;quot;, &amp;quot;STATUS&amp;quot;)]\n&amp;gt;       assert replies == [&amp;quot;OK&amp;quot;, &amp;quot;OK&amp;quot;, &amp;quot;OK&amp;quot;, &amp;quot;STATUS ON&amp;quot;]\nE       AssertionError: assert [&amp;#x27;OK&amp;#x27;, &amp;#x27;BUSY&amp;#x27;..., &amp;#x27;STATUS ON&amp;#x27;] == [&amp;#x27;OK&amp;#x27;, &amp;#x27;OK&amp;#x27;, ..., &amp;#x27;STATUS ON&amp;#x27;]\nE         \nE         At index 1 diff: &amp;#x27;BUSY&amp;#x27; != &amp;#x27;OK&amp;#x27;\nE         Use -v to get more diff\n\ntests\\e2e\\test_f1_relay_control.py:221: AssertionError\n\n------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:27:05.060 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:27:05.061 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:05.062 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:05.242 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:27:05.243 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:27:05.257 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.195s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:27:05.258 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;OFF&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:05.422 HOST TX b&amp;#x27;OFF\\n&amp;#x27;\r\n2026-11-20T15:27:05.423 HOST RX b&amp;#x27;BUSY\\n&amp;#x27;\r\n2026-11-20T15:27:05.439 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;BUSY&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.181s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:27:05.439 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:05.580 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:27:05.581 HOST RX b&amp;#x27;OK\\n&amp;#x27;\r\n2026-11-20T15:27:05.595 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;OK&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.155s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:27:05.595 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;STATUS&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:05.760 HOST TX b&amp;#x27;STATUS\\n&amp;#x27;\r\n2026-11-20T15:27:05.761 HOST RX b&amp;#x27;STATUS ON\\n&amp;#x27;\r\n2026-11-20T15:27:05.775 TEST &amp;lt; &amp;quot;exit=0 stdout=&amp;#x27;STATUS ON&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.180s send_to_end=0.001&amp;quot;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[no-command]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-15&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[no-command]&#34;, &#34;duration&#34;: &#34;171 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-15&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[no-command]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;171 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:27:05.793 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:27:05.794 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:05.795 TEST &amp;gt; &amp;#x27;relay-host --port 62501 --timeout 1.0 &amp;lt;no command&amp;gt;&amp;#x27;\r\n2026-11-20T15:27:05.950 TEST &amp;lt; &amp;quot;exit=2 stdout=&amp;#x27;&amp;#x27; stderr=&amp;#x27;usage: relay-host [-h] [--host HOST] [--port PORT] [--timeout TIMEOUT] command\\\\nERROR: the following arguments are required: command&amp;#x27; duration=0.155s send_to_end=None&amp;quot;\r\n2026-11-20T15:27:05.951 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:27:05.952 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[port-out-of-range]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-15&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[port-out-of-range]&#34;, &#34;duration&#34;: &#34;178 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-15&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[port-out-of-range]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;178 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:27:05.977 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:27:05.978 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:05.978 TEST &amp;gt; &amp;quot;relay-host --port 70000 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:06.128 TEST &amp;lt; &amp;quot;exit=2 stdout=&amp;#x27;&amp;#x27; stderr=&amp;#x27;usage: relay-host [-h] [--host HOST] [--port PORT] [--timeout TIMEOUT] command\\\\nERROR: argument --port: port must be 1-65535, got 70000&amp;#x27; duration=0.149s send_to_end=None&amp;quot;\r\n2026-11-20T15:27:06.129 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:27:06.130 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[timeout-zero]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-15&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[timeout-zero]&#34;, &#34;duration&#34;: &#34;160 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-15&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_15_usage_error_sends_nothing[timeout-zero]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;160 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:27:06.143 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:27:06.144 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:06.145 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:06.291 TEST &amp;lt; &amp;quot;exit=2 stdout=&amp;#x27;&amp;#x27; stderr=&amp;#x27;usage: relay-host [-h] [--host HOST] [--port PORT] [--timeout TIMEOUT] command\\\\nERROR: argument --timeout: timeout must be a positive number of seconds, got 0&amp;#x27; duration=0.146s send_to_end=None&amp;quot;\r\n2026-11-20T15:27:06.291 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:27:06.292 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}], &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_16_silence_wins_over_hw_fault&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;ac&#34;: &#34;AC-F1-16&#34;, &#34;testId&#34;: &#34;tests/e2e/test_f1_relay_control.py::test_ac_f1_16_silence_wins_over_hw_fault&#34;, &#34;duration&#34;: &#34;860 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-ac\&#34;&gt;AC-F1-16&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/e2e/test_f1_relay_control.py::test_ac_f1_16_silence_wins_over_hw_fault&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;860 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------- Exchange log (host &amp;lt;-&amp;gt; simulator) --------------------\n2026-11-20T15:27:06.310 CTRL &amp;gt; &amp;#x27;RESET&amp;#x27;\r\n2026-11-20T15:27:06.311 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:06.312 CTRL &amp;gt; &amp;#x27;SET_STATE OFF&amp;#x27;\r\n2026-11-20T15:27:06.312 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:06.312 CTRL &amp;gt; &amp;#x27;FAULT HW_FAULT&amp;#x27;\r\n2026-11-20T15:27:06.313 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:06.313 CTRL &amp;gt; &amp;#x27;SILENCE ON&amp;#x27;\r\n2026-11-20T15:27:06.313 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:06.313 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 0.5 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:06.453 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:27:06.961 HOST TIMEOUT b&amp;#x27;&amp;#x27;\r\n2026-11-20T15:27:06.974 TEST &amp;lt; &amp;quot;exit=3 stdout=&amp;#x27;&amp;#x27; stderr=&amp;#x27;ERROR: no response from device within 0.5s&amp;#x27; duration=0.660s send_to_end=0.508&amp;quot;\r\n2026-11-20T15:27:06.974 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:27:06.974 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n2026-11-20T15:27:06.975 CTRL &amp;gt; &amp;#x27;SILENCE OFF&amp;#x27;\r\n2026-11-20T15:27:06.977 CTRL &amp;lt; &amp;#x27;OK&amp;#x27;\r\n2026-11-20T15:27:06.977 TEST &amp;gt; &amp;quot;relay-host --port 62501 --timeout 1.0 &amp;#x27;ON&amp;#x27;&amp;quot;\r\n2026-11-20T15:27:07.134 HOST TX b&amp;#x27;ON\\n&amp;#x27;\r\n2026-11-20T15:27:07.135 HOST RX b&amp;#x27;ERR HW_FAULT\\n&amp;#x27;\r\n2026-11-20T15:27:07.151 TEST &amp;lt; &amp;quot;exit=1 stdout=&amp;#x27;ERR HW_FAULT&amp;#x27; stderr=&amp;#x27;&amp;#x27; duration=0.173s send_to_end=0.001&amp;quot;\r\n2026-11-20T15:27:07.151 CTRL &amp;gt; &amp;#x27;GET_STATE&amp;#x27;\r\n2026-11-20T15:27:07.151 CTRL &amp;lt; &amp;#x27;STATE OFF&amp;#x27;\r\n\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;e2e-run-1.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+  </body>
+</html>

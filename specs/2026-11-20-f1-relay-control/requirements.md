@@ -152,6 +152,9 @@ Sections 1-7 above are kept as written; this section adds rules and states which
   no-op because the relay is still `ON`); final state `ON`.
 - Any other F1 AC whose test toggles twice within 2 s is listed by the regression run
   (`reports/regression-cr01.md`) and updated here before its test is changed.
+- **AC-F1-13** (found by the regression run; approved 2026-11-20): the AC text is unchanged. Its validation
+  sequence `ON`, `STATUS`, `OFF`, `STATUS` toggles twice, so the clock must advance at least 2.000 s before
+  `OFF` (`OFF` then replies `OK` and `STATUS OFF` follows).
 
 **New acceptance criteria**
 
