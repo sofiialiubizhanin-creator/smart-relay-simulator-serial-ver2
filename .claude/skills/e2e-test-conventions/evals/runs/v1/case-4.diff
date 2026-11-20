@@ -1,0 +1,56 @@
+diff --git a/specs/2026-11-20-cr01-toggle-rate-limit/requirements.md b/specs/2026-11-20-cr01-toggle-rate-limit/requirements.md
+new file mode 100644
+index 0000000..7406981
+--- /dev/null
++++ b/specs/2026-11-20-cr01-toggle-rate-limit/requirements.md
+@@ -0,0 +1,50 @@
++# CR-01: Toggle rate limit: requirements
++
++Status: **DRAFT - waiting for user review** (open questions in section 6) | Phase 2
++Source: user request "CR-01 is accepted: relay cannot be toggled more than once per 2 s (BUSY);
++boundary 2.000 s allowed" + `specs/roadmap.md` Phase 2.
++
++## 1. Scope
++Adds a rate limit on relay toggles to the device protocol of F1 (`specs/2026-11-20-f1-relay-control`).
++Everything not mentioned here stays as in F1.
++
++## 2. Definitions
++- **Toggle**: an `ON` or `OFF` command that is accepted and changes the relay state
++  (`OFF -> ON` or `ON -> OFF`) (roadmap definition).
++- **Elapsed**: simulator clock time since the last toggle (manual clock in tests, monotonic in `real` mode).
++
++## 3. Rule (proposed - see open questions)
++- A toggle is allowed if there was no previous toggle since startup / `RESET`, or if elapsed >= 2.000 s.
++- If elapsed < 2.000 s, the command replies `BUSY`, the state does not change, and the host exits
++  with code 1 (already reserved in F1 section 4).
++- **Boundary:** elapsed == 2.000 s is allowed (replies `OK`).
++- Proposed error priority (F1 section 3) gets a new step after `HW_FAULT`: 6. a toggle with elapsed < 2 s: `BUSY`.
++- Proposed: a rejected command (`BUSY`, `ERR ...`) is not a toggle and does not restart the 2 s window.
++- Proposed: `STATUS` and a no-op `ON`/`OFF` (relay already in that state) are never `BUSY` and do not restart the window.
++- Proposed: `RESET` clears the window; `SET_STATE` neither starts nor clears it.
++
++## 4. Acceptance Criteria (proposed)
++
++| ID | Given / When / Then |
++|---|---|
++| AC-CR01-01 | Given a toggle was made at time T, when the host sends a toggle at T + 1.999 s (also at T + 0 s), the reply is `BUSY`, the exit code is 1 and the state is unchanged. |
++| AC-CR01-02 | Given a toggle was made at time T, when the host sends a toggle at exactly T + 2.000 s (boundary), or later, the reply is `OK`, the exit code is 0 and the state changes. |
++| AC-CR01-03 | The first toggle after startup / `RESET` is allowed at clock 0 (no previous toggle). |
++| AC-CR01-04 | A `BUSY` reply does not restart the window: toggle at T, `BUSY` at T + 1.5 s, toggle at T + 2.0 s replies `OK`. |
++| AC-CR01-05 | `STATUS` and a no-op `ON`/`OFF` inside the window reply as in F1 (`STATUS ...` / `OK`, exit 0) and do not restart the window. |
++| AC-CR01-06 | Priority: with `HW_FAULT` active, a toggle inside the window replies `ERR HW_FAULT`; invalid lines keep their F1 errors. |
++
++## 5. Impact on F1
++- AC-F1-14 (`ON`, `OFF`, `ON`, `STATUS` with no clock advance) changes: proposed new expectation
++  `OK`, `BUSY`, `OK` (no-op, relay is already ON), `STATUS ON`. Per roadmap: first a regression run
++  shows which F1 tests break, then F1 requirements get a `Changes` section, then tests are updated.
++- Other F1 tests that toggle more than once without `ADVANCE` (e.g. AC-F1-10 recovery, AC-F1-13) must be checked in that regression run.
++
++## 6. Open questions (must be answered before validation.md and tests)
++1. Is the first toggle after startup / `RESET` allowed at clock 0? (Proposed: yes; otherwise AC-F1-01 breaks.)
++2. Is a no-op `ON`/`OFF` (relay already in that state) inside the window `OK` or `BUSY`? Does it restart the window?
++3. Does a `BUSY`-rejected command restart the 2 s window (sliding) or not (fixed from the last accepted toggle)?
++4. Priority vs `HW_FAULT`: inside the window, does a toggle under fault reply `ERR HW_FAULT` or `BUSY`?
++5. Do `SET_STATE` / `RESET` affect the window?
++6. Time resolution for the boundary: is 2.000 s compared at ms resolution (so 1.9995 s is `BUSY`)?
++7. Exact reply text: `BUSY` alone (no `ERR ` prefix, no remaining-time suffix)?

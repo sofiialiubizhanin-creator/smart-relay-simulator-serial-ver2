@@ -1,0 +1,83 @@
+diff --git a/specs/2026-11-20-f1-relay-control/validation.md b/specs/2026-11-20-f1-relay-control/validation.md
+index f6b2096..64bce55 100644
+--- a/specs/2026-11-20-f1-relay-control/validation.md
++++ b/specs/2026-11-20-f1-relay-control/validation.md
+@@ -16,7 +16,7 @@ with `GET_STATE`. Every test starts after `RESET` (state `OFF`, no fault or sile
+ | AC-F1-07 | Empty line | from both states, host `""` -> `ERR EMPTY`/1, state unchanged | | |
+ | AC-F1-08 | Whitespace or extra character | each of `" ON"`, `"ON "`, `"O N"`, `"ON\t"`, `"ON\r"`, `"   "`, from both states -> `ERR UNKNOWN_CMD`/1, state unchanged | | |
+ | AC-F1-09 | Length limit and priority | 32 x `A` -> `ERR UNKNOWN_CMD`; 33 x `A` -> `ERR TOO_LONG`; 31 x `A` + `\r` (32 B) -> `ERR UNKNOWN_CMD`; 32 x `A` + `\r` (33 B) -> `ERR TOO_LONG`; 33 x `o` and `ON` + 31 spaces -> `ERR TOO_LONG`; all exit 1, from both states, state unchanged | | |
+-| AC-F1-10 | HW fault, priority, recovery | `FAULT HW_FAULT`, from both states: `ON` and `OFF` (incl. the current state) -> `ERR HW_FAULT`/1, state unchanged; `STATUS` -> correct/0; `on` -> `ERR UNKNOWN_CMD`, `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`; recovery: from OFF and from ON, `FAULT NONE` -> the opposite command -> `OK`, state changed | | |
++| AC-F1-10 | HW fault, priority, recovery | `FAULT HW_FAULT`, from both states: `ON` and `OFF` (incl. the current state) -> `ERR HW_FAULT`/1, state unchanged; `STATUS` -> correct/0; `on` -> `ERR UNKNOWN_CMD`, `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`; recovery: from OFF and from ON, `FAULT NONE` -> the opposite command -> `OK`, state changed | `tests/e2e/test_f1_hw_fault.py`: `test_ac_f1_10_switch_command_under_hw_fault_replies_err_hw_fault`, `test_ac_f1_10_status_still_works_under_hw_fault`, `test_ac_f1_10_invalid_line_under_hw_fault_gets_own_error`, `test_ac_f1_10_commands_work_again_after_fault_none` | |
+ | AC-F1-11 | Silent device | state OFF, `SILENCE ON` -> host `ON` with `--timeout 0.5` -> exit 3, stderr `ERROR: no response from device within 0.5s`, host log TX -> TIMEOUT <= 1.0 s, state still OFF; `SILENCE OFF` -> `STATUS` -> `STATUS OFF`/0 | | |
+ | AC-F1-12 | Simulator unreachable | host on `dead_port` -> exit 2, stderr starts with `ERROR: cannot connect`, finishes in < 6 s (pyserial's connect limit is 5 s; Windows retries a refused loopback connect for ~2 s per address) | | |
+ | AC-F1-13 | State persists across connections | host `ON` (process 1) -> host `STATUS` (process 2) -> `STATUS ON`; host `OFF` -> host `STATUS` -> `STATUS OFF` | | |
+diff --git a/tests/e2e/test_f1_hw_fault.py b/tests/e2e/test_f1_hw_fault.py
+new file mode 100644
+index 0000000..bd11b2f
+--- /dev/null
++++ b/tests/e2e/test_f1_hw_fault.py
+@@ -0,0 +1,64 @@
++"""AC-F1-10: hardware fault injection, error priority and recovery (requirements section 3, AC-F1-10)."""
++import pytest
++
++STATES = ["OFF", "ON"]
++
++
++@pytest.mark.ac("AC-F1-10")
++@pytest.mark.parametrize("cmd", ["ON", "OFF"])
++@pytest.mark.parametrize("initial", STATES)
++def test_ac_f1_10_switch_command_under_hw_fault_replies_err_hw_fault(host, control, initial, cmd):
++    """ON and OFF (including the already-current state) -> ERR HW_FAULT / 1, state unchanged."""
++    control.set_state(initial)
++    control.fault("HW_FAULT")
++    r = host(cmd)
++    assert (r.stdout, r.exit_code) == ("ERR HW_FAULT", 1)
++    assert control.get_state() == initial
++
++
++@pytest.mark.ac("AC-F1-10")
++@pytest.mark.parametrize("initial", STATES)
++def test_ac_f1_10_status_still_works_under_hw_fault(host, control, initial):
++    control.set_state(initial)
++    control.fault("HW_FAULT")
++    r = host("STATUS")
++    assert (r.stdout, r.exit_code) == (f"STATUS {initial}", 0)
++    assert control.get_state() == initial
++
++
++@pytest.mark.ac("AC-F1-10")
++@pytest.mark.parametrize(
++    ("line", "expected"),
++    [
++        ("on", "ERR UNKNOWN_CMD"),       # rule 4 (not an exact command) wins over rule 5 (HW_FAULT)
++        ("", "ERR EMPTY"),               # rule 2 wins over rule 5
++        ("A" * 33, "ERR TOO_LONG"),      # rule 3 wins over rule 5
++        ("ON" + " " * 31, "ERR TOO_LONG"),  # 33 B starting with ON: length checked before content/fault
++    ],
++    ids=["lowercase-on", "empty", "33-bytes", "ON-plus-31-spaces"],
++)
++@pytest.mark.parametrize("initial", STATES)
++def test_ac_f1_10_invalid_line_under_hw_fault_gets_own_error(host, control, initial, line, expected):
++    """Error priority: an invalid line keeps its own error, not ERR HW_FAULT; state unchanged."""
++    control.set_state(initial)
++    control.fault("HW_FAULT")
++    r = host(line)
++    assert (r.stdout, r.exit_code) == (expected, 1)
++    assert control.get_state() == initial
++
++
++@pytest.mark.ac("AC-F1-10")
++@pytest.mark.parametrize(("initial", "cmd", "expected_state"), [("OFF", "ON", "ON"), ("ON", "OFF", "OFF")])
++def test_ac_f1_10_commands_work_again_after_fault_none(host, control, initial, cmd, expected_state):
++    control.set_state(initial)
++    control.fault("HW_FAULT")
++    r = host(cmd)
++    assert (r.stdout, r.exit_code) == ("ERR HW_FAULT", 1)
++    assert control.get_state() == initial
++
++    control.fault("NONE")
++    r = host(cmd)
++    assert (r.stdout, r.exit_code) == ("OK", 0)
++    assert control.get_state() == expected_state
++    r = host("STATUS")
++    assert (r.stdout, r.exit_code) == (f"STATUS {expected_state}", 0)

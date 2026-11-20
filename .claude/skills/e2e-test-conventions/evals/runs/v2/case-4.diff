@@ -1,0 +1,44 @@
+diff --git a/specs/2026-11-20-f1-relay-control/requirements.md b/specs/2026-11-20-f1-relay-control/requirements.md
+index 071c4e3..4a429d4 100644
+--- a/specs/2026-11-20-f1-relay-control/requirements.md
++++ b/specs/2026-11-20-f1-relay-control/requirements.md
+@@ -119,3 +119,39 @@ If a port cannot be opened, it prints one `ERROR:` line to stderr and exits with
+ ## 7. Out of scope
+ Persistent configuration, several relays, concurrent clients, an interactive host shell, non-ASCII or
+ binary payloads beyond rejecting them, security, and real serial hardware.
++
++## 8. Changes
++
++### CR-01: Toggle rate limit (DRAFT, pending user review; not approved, no tests or code yet)
++Source: roadmap Phase 2. Accepted by the user: "relay cannot be toggled more than once per 2 s (BUSY);
++boundary 2.000 s allowed".
++
++**Proposed rule.** A *toggle* is an accepted `ON`/`OFF` that changes the state. If a toggle is requested
++less than 2.000 s (simulator clock) after the previous toggle, the device replies `BUSY` and the state is
++unchanged; the host exits with code 1. A request exactly 2.000 s after the previous toggle is accepted.
++
++**Proposed AC (IDs to be confirmed):**
++
++| ID | Given / When / Then |
++|---|---|
++| AC-F1-16 | Given a toggle happened at clock t, when a toggling `ON`/`OFF` is sent at t + d with d < 2.000 s (e.g. 0, 1.999), then the reply is `BUSY`, the exit code is 1 and the state is unchanged. |
++| AC-F1-17 | Given a toggle happened at clock t, when a toggling `ON`/`OFF` is sent at t + 2.000 s (boundary) or later, then the reply is `OK`, the exit code is 0 and the state changes. |
++| AC-F1-14 (changed) | The quick sequence `ON`, `OFF`, `ON`, `STATUS` with no clock advance replies `OK`, `BUSY`, `BUSY`, `STATUS ON` (pending answers to Q2/Q3). |
++
++**Open questions (must be answered before tests are written):**
++1. **Non-toggling commands.** Does `ON` while already `ON` (no state change, AC-F1-04) reply `OK` even inside
++   the 2 s window, and does it leave the window untouched? (Proposed: yes, `OK`, window not restarted.)
++2. **Does a rejected (`BUSY`) request restart the window?** (Proposed: no; the window counts only from the
++   last *accepted* toggle.)
++3. **First toggle after startup / `RESET`.** Is it always allowed, even at clock 0? Does `RESET` clear the
++   window? (Proposed: yes and yes.)
++4. **`SET_STATE`** is documented as "not a toggle". Confirm it neither starts nor is blocked by the window.
++5. **Error priority.** Where does `BUSY` sit relative to `ERR HW_FAULT` and silence? (Proposed: after rule 5,
++   i.e. silence > `ERR EMPTY` > `ERR TOO_LONG` > `ERR UNKNOWN_CMD` > `ERR HW_FAULT` > `BUSY`.) Does an `ON`/`OFF`
++   rejected with `ERR HW_FAULT` count as a toggle? (Proposed: no.)
++6. **`STATUS`** is never `BUSY`? (Proposed: yes.)
++7. **Clock resolution / boundary.** The boundary is compared on the simulator clock with exact decimal
++   arithmetic (no float rounding at 2.000 vs 1.999...)? What is the smallest "just under" value the tests should
++   use (proposed: 1.999 s)? Real clock: is the elapsed time measured on receipt of the full command line?
++8. **Reply text.** Exactly `BUSY` (no `ERR ` prefix, no remaining-time field)?
++9. **AC numbering.** New IDs AC-F1-16/17 in F1, as the roadmap says (F1 `Changes` section), not a new feature folder?

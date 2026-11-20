@@ -1,0 +1,36 @@
+diff --git a/tests/e2e/test_f1_relay_control.py b/tests/e2e/test_f1_relay_control.py
+new file mode 100644
+index 0000000..c30b357
+--- /dev/null
++++ b/tests/e2e/test_f1_relay_control.py
+@@ -0,0 +1,30 @@
++"""E2E tests for F1: relay control and status (specs/2026-11-20-f1-relay-control)."""
++import pytest
++
++SILENT_TIMEOUT = 0.5
++# AC-F1-11: the host must give up no later than --timeout + 0.5 s, counted from the moment it sent the
++# command (host exchange log TX -> TIMEOUT), not from process start. Process startup time is excluded
++# on purpose: it is not part of the contract and varies between machines.
++SILENT_BOUND = SILENT_TIMEOUT + 0.5
++
++
++@pytest.mark.ac("AC-F1-11")
++def test_ac_f1_11_silent_device_times_out_and_recovers(host, control):
++    control.set_state("OFF")
++    control.silence(True)
++
++    r = host("ON", timeout=SILENT_TIMEOUT)
++
++    assert r.exit_code == 3
++    assert r.stdout == ""
++    assert r.stderr == f"ERROR: no response from device within {SILENT_TIMEOUT}s"
++    assert r.sent, "host log has no TX line: the command was never sent to the device"
++    assert r.send_to_end is not None, "host log has no TIMEOUT/ERROR line after TX"
++    assert r.send_to_end <= SILENT_BOUND, (
++        f"host gave up {r.send_to_end:.3f}s after sending the command (limit {SILENT_BOUND}s)")
++    assert control.get_state() == "OFF", "a command sent to a silent device must be discarded"
++
++    control.silence(False)
++    r = host("STATUS")
++    assert (r.stdout, r.exit_code) == ("STATUS OFF", 0)
++    assert control.get_state() == "OFF"

@@ -1,0 +1,31 @@
+diff --git a/specs/2026-11-20-f1-relay-control/validation.md b/specs/2026-11-20-f1-relay-control/validation.md
+index f6b2096..56c1771 100644
+--- a/specs/2026-11-20-f1-relay-control/validation.md
++++ b/specs/2026-11-20-f1-relay-control/validation.md
+@@ -13,7 +13,7 @@ with `GET_STATE`. Every test starts after `RESET` (state `OFF`, no fault or sile
+ | AC-F1-04 | Repeated same command is a no-op | set ON -> `ON` -> `OK`/0, state ON; set OFF -> `OFF` -> `OK`/0, state OFF | | |
+ | AC-F1-05 | Unknown command | each of `TOGGLE`, `RESET`, `X`, from both states -> `ERR UNKNOWN_CMD`/1, state unchanged | | |
+ | AC-F1-06 | Non-uppercase rejected | each of `on`, `off`, `Off`, `oN`, `status`, from both states -> `ERR UNKNOWN_CMD`/1, state unchanged | | |
+-| AC-F1-07 | Empty line | from both states, host `""` -> `ERR EMPTY`/1, state unchanged | | |
++| AC-F1-07 | Empty line | from both states, host `""` -> `ERR EMPTY`/1, state unchanged | `test_f1_relay_control.py::test_ac_f1_07_empty_line_replies_err_empty[OFF,ON]` | |
+ | AC-F1-08 | Whitespace or extra character | each of `" ON"`, `"ON "`, `"O N"`, `"ON\t"`, `"ON\r"`, `"   "`, from both states -> `ERR UNKNOWN_CMD`/1, state unchanged | | |
+ | AC-F1-09 | Length limit and priority | 32 x `A` -> `ERR UNKNOWN_CMD`; 33 x `A` -> `ERR TOO_LONG`; 31 x `A` + `\r` (32 B) -> `ERR UNKNOWN_CMD`; 32 x `A` + `\r` (33 B) -> `ERR TOO_LONG`; 33 x `o` and `ON` + 31 spaces -> `ERR TOO_LONG`; all exit 1, from both states, state unchanged | | |
+ | AC-F1-10 | HW fault, priority, recovery | `FAULT HW_FAULT`, from both states: `ON` and `OFF` (incl. the current state) -> `ERR HW_FAULT`/1, state unchanged; `STATUS` -> correct/0; `on` -> `ERR UNKNOWN_CMD`, `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`; recovery: from OFF and from ON, `FAULT NONE` -> the opposite command -> `OK`, state changed | | |
+diff --git a/tests/e2e/test_f1_relay_control.py b/tests/e2e/test_f1_relay_control.py
+new file mode 100644
+index 0000000..3f7fc9e
+--- /dev/null
++++ b/tests/e2e/test_f1_relay_control.py
+@@ -0,0 +1,12 @@
++"""E2E tests for F1: relay control and status (specs/2026-11-20-f1-relay-control)."""
++import pytest
++
++
++@pytest.mark.ac("AC-F1-07")
++@pytest.mark.parametrize("initial", ["OFF", "ON"])
++def test_ac_f1_07_empty_line_replies_err_empty(host, control, initial):
++    control.set_state(initial)
++    r = host("")
++    assert r.sent, "the host must send the empty line to the device (not treat it as a usage error)"
++    assert (r.stdout, r.exit_code) == ("ERR EMPTY", 1)
++    assert control.get_state() == initial

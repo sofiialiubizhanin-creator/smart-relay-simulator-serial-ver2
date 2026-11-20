@@ -1,0 +1,21 @@
+diff --git a/tests/unit/test_clock.py b/tests/unit/test_clock.py
+new file mode 100644
+index 0000000..0c583e1
+--- /dev/null
++++ b/tests/unit/test_clock.py
+@@ -0,0 +1,15 @@
++"""Unit tests for relay_sim.clock.ManualClock."""
++import pytest
++
++from relay_sim.clock import ManualClock
++
++
++@pytest.mark.parametrize("seconds", [-1.0, -0.001, -1e9])
++def test_manual_clock_advance_rejects_negative(seconds):
++    clock = ManualClock()
++    clock.advance(5.0)
++
++    with pytest.raises(ValueError):
++        clock.advance(seconds)
++
++    assert clock.now() == 5.0  # time is unchanged after a rejected advance
