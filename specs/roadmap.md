@@ -3,7 +3,8 @@
 Every phase follows: requirements.md -> plan.md -> validation.md (before code) -> implementation -> validation results -> CHANGELOG entry.
 **A phase is done when:** all of its E2E tests are green in one `python run.py` (= 5 consecutive suite runs), `validation.md` links every AC to its tests and run results, and CHANGELOG has an entry.
 
-## Phase 1: Simulator + F1 (relay control and status)
+## Phase 1: Simulator + F1 (relay control and status) - DONE 2026-11-20
+Done: `python run.py` 5/5 green (73 tests, AC-F1-01..16), validation.md complete, CHANGELOG 0.1.0, skill evals v1 -> v2.
 Simulator with control API and controlled clock, `relay-host` CLI, commands ON / OFF / STATUS with error
 handling and fault injection. Skill `e2e-test-conventions` v1 is in place before the first E2E test;
 skill evals are run on v1 and on the refined version (`reports/skill-evals.md`); this is also required to close the phase.
