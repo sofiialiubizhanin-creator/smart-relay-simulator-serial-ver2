@@ -106,12 +106,13 @@ If a port cannot be opened, it prints one `ERROR:` line to stderr and exits with
 | AC-F1-13 | The state stays the same across separate host calls: `ON` in one call, then `STATUS` in another, replies `STATUS ON`. |
 | AC-F1-14 | A quick sequence of four separate host calls with no clock advance, `ON`, `OFF`, `ON`, `STATUS`, replies `OK`, `OK`, `OK`, `STATUS ON`. *(Expected to be affected by CR-01.)* |
 | AC-F1-15 | A usage error (`COMMAND` missing, `--port` outside 1-65535, or `--timeout` <= 0) exits with code 2, prints the usage line plus one `ERROR:` line on stderr, and sends nothing to the device. |
+| AC-F1-16 | Given both `HW_FAULT` and silence are active, silence wins (error priority rule 1): `ON` gets no reply, the host exits with code 3 and the state is unchanged. After `SILENCE OFF` the fault is still active: `ON` replies `ERR HW_FAULT` with exit code 1. |
 
 ## 6. Edge cases (where each is covered)
 - Repeated `ON` or `OFF` (AC-F1-04). Commands right after a reset (AC-F1-03).
 - A line of only spaces is not empty: it replies `ERR UNKNOWN_CMD` (AC-F1-08).
 - The length limit at exactly 32 and at 33 bytes; `\r` and whitespace count toward the length (AC-F1-09).
-- A line that breaks several rules follows the error priority in section 3 (AC-F1-09, AC-F1-10).
+- A line that breaks several rules follows the error priority in section 3 (AC-F1-09, AC-F1-10, AC-F1-16).
 - `HW_FAULT` together with repeated commands: a fault always wins over "already in that state" (AC-F1-10).
 - A silent device does not leave the host hanging, and a command sent to it is discarded (AC-F1-11).
   The simulator is down (AC-F1-12). Wrong host usage sends nothing (AC-F1-15).
