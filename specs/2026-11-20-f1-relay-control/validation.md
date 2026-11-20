@@ -51,13 +51,13 @@ CR-01 results are filled in below. Time is moved only with `control.advance()` (
 
 | AC | What we verify | How (setup -> action -> expected) | Test(s) | Result |
 |---|---|---|---|---|
-| AC-F1-14 (changed) | Quick sequence under CR-01 | four separate host calls `ON`, `OFF`, `ON`, `STATUS`, no `ADVANCE` -> `OK`, `BUSY`, `OK`, `STATUS ON`; final state ON | | |
-| AC-F1-17 | Toggle inside the window is `BUSY` | both directions (set OFF -> toggle `ON`; set ON -> toggle `OFF`); then advance 0 / 1.999 -> the opposite command -> `BUSY`/1, state unchanged | | |
-| AC-F1-18 | Toggle at or after 2.000 s is accepted | both directions; after the first toggle advance 2.000, 2.5, or 1.999 + 0.001 (two steps) -> the opposite command -> `OK`/0, state changed | | |
-| AC-F1-19 | `BUSY` does not restart the window | toggle `ON` at 0; advance 1.5 -> `OFF` -> `BUSY`; advance 0.5 (t = 2.0) -> `OFF` -> `OK`, state OFF | | |
-| AC-F1-20 | `STATUS` and no-op inside the window | toggle `ON` at 0; advance 1.0 -> `STATUS` -> `STATUS ON`/0, `ON` -> `OK`/0, state ON; advance 1.0 (t = 2.0) -> `OFF` -> `OK`, state OFF | | |
-| AC-F1-21 | `RESET` clears the window; `SET_STATE` starts none | (a) toggle `ON`, `RESET` (state OFF) -> `ON` at once -> `OK`, state ON; (b) `SET_STATE ON` -> `OFF` at once -> `OK`, state OFF | | |
-| AC-F1-22 | Priority over `BUSY` | toggle `ON` at 0, advance 0.5: with `FAULT HW_FAULT` -> `OFF` -> `ERR HW_FAULT`/1; without fault: `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`, `off` -> `ERR UNKNOWN_CMD` (never `BUSY`); state stays ON | | |
+| AC-F1-14 (changed) | Quick sequence under CR-01 | four separate host calls `ON`, `OFF`, `ON`, `STATUS`, no `ADVANCE` -> `OK`, `BUSY`, `OK`, `STATUS ON`; final state ON | `test_ac_f1_14_quick_sequence_without_clock_advance` | |
+| AC-F1-17 | Toggle inside the window is `BUSY` | both directions (set OFF -> toggle `ON`; set ON -> toggle `OFF`); then advance 0 / 1.999 -> the opposite command -> `BUSY`/1, state unchanged | `test_ac_f1_17_toggle_inside_window_replies_busy` | |
+| AC-F1-18 | Toggle at or after 2.000 s is accepted | both directions; after the first toggle advance 2.000, 2.5, or 1.999 + 0.001 (two steps) -> the opposite command -> `OK`/0, state changed | `test_ac_f1_18_toggle_at_or_after_window_replies_ok` | |
+| AC-F1-19 | `BUSY` does not restart the window | toggle `ON` at 0; advance 1.5 -> `OFF` -> `BUSY`; advance 0.5 (t = 2.0) -> `OFF` -> `OK`, state OFF | `test_ac_f1_19_busy_does_not_restart_window` | |
+| AC-F1-20 | `STATUS` and no-op inside the window | toggle `ON` at 0; advance 1.0 -> `STATUS` -> `STATUS ON`/0, `ON` -> `OK`/0, state ON; advance 1.0 (t = 2.0) -> `OFF` -> `OK`, state OFF | `test_ac_f1_20_status_and_noop_inside_window` | |
+| AC-F1-21 | `RESET` clears the window; `SET_STATE` starts none | (a) toggle `ON`, `RESET` (state OFF) -> `ON` at once -> `OK`, state ON; (b) `SET_STATE ON` -> `OFF` at once -> `OK`, state OFF | `test_ac_f1_21_reset_clears_window`, `test_ac_f1_21_set_state_starts_no_window` | |
+| AC-F1-22 | Priority over `BUSY` | toggle `ON` at 0, advance 0.5: with `FAULT HW_FAULT` -> `OFF` -> `ERR HW_FAULT`/1; without fault: `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`, `off` -> `ERR UNKNOWN_CMD` (never `BUSY`); state stays ON | `test_ac_f1_22_hw_fault_has_priority_over_busy`, `test_ac_f1_22_invalid_line_inside_window_keeps_own_error` | |
 
 | Check | How | Result |
 |---|---|---|

@@ -209,16 +209,18 @@ def test_ac_f1_12_unreachable_device_connection_error(host, dead_port):
 def test_ac_f1_13_state_persists_across_host_calls(host, control):
     assert host("ON").stdout == "OK"
     assert host("STATUS").stdout == "STATUS ON"
+    control.advance(2.0)  # CR-01 (requirements section 8, AC-F1-13): leave the toggle window before OFF
     assert host("OFF").stdout == "OK"
     assert host("STATUS").stdout == "STATUS OFF"
     assert control.get_state() == "OFF"
 
 
-# ---------- AC-F1-14: quick sequence (expected to be affected by CR-01) ----------
+# ---------- AC-F1-14: quick sequence (superseded by CR-01, requirements section 8) ----------
 @pytest.mark.ac("AC-F1-14")
 def test_ac_f1_14_quick_sequence_without_clock_advance(host, control):
-    replies = [host(cmd).stdout for cmd in ("ON", "OFF", "ON", "STATUS")]
-    assert replies == ["OK", "OK", "OK", "STATUS ON"]
+    results = [host(cmd) for cmd in ("ON", "OFF", "ON", "STATUS")]  # no clock advance
+    assert [(r.stdout, r.exit_code) for r in results] == [
+        ("OK", 0), ("BUSY", 1), ("OK", 0), ("STATUS ON", 0)]  # 2nd: toggle inside the window; 3rd: no-op
     assert control.get_state() == "ON"
 
 
@@ -250,3 +252,104 @@ def test_ac_f1_16_silence_wins_over_hw_fault(host, control):
     r = host("ON")
     assert (r.stdout, r.exit_code) == ("ERR HW_FAULT", 1)
     assert control.get_state() == "OFF"
+
+
+# =====================================================================================================
+# CR-01: toggle rate limit (requirements section 8). Time moves only with control.advance(), never sleep.
+# =====================================================================================================
+def _toggle(host, control, initial: str) -> str:
+    """Set `initial` (SET_STATE starts no window), toggle once through the host; return the new state."""
+    control.set_state(initial)
+    target = OPPOSITE[initial]
+    r = host(target)
+    assert (r.stdout, r.exit_code) == ("OK", 0), "precondition: the first toggle is accepted"
+    return target
+
+
+@pytest.mark.ac("AC-F1-17")
+@pytest.mark.parametrize("elapsed", [0, 1.999], ids=["+0s", "+1.999s"])
+@pytest.mark.parametrize("initial", STATES, ids=["off-to-on-first", "on-to-off-first"])
+def test_ac_f1_17_toggle_inside_window_replies_busy(host, control, initial, elapsed):
+    state = _toggle(host, control, initial)
+    if elapsed:
+        control.advance(elapsed)
+    r = host(OPPOSITE[state])
+    assert (r.stdout, r.exit_code) == ("BUSY", 1)
+    assert control.get_state() == state
+
+
+@pytest.mark.ac("AC-F1-18")
+@pytest.mark.parametrize("steps", [(2.0,), (2.5,), (1.999, 0.001)], ids=["2.000s", "2.5s", "1.999+0.001s"])
+@pytest.mark.parametrize("initial", STATES, ids=["off-to-on-first", "on-to-off-first"])
+def test_ac_f1_18_toggle_at_or_after_window_replies_ok(host, control, initial, steps):
+    state = _toggle(host, control, initial)
+    for step in steps:
+        control.advance(step)
+    r = host(OPPOSITE[state])
+    assert (r.stdout, r.exit_code) == ("OK", 0)
+    assert control.get_state() == OPPOSITE[state]
+
+
+@pytest.mark.ac("AC-F1-19")
+def test_ac_f1_19_busy_does_not_restart_window(host, control):
+    _toggle(host, control, "OFF")                                  # toggle ON at t = 0
+    control.advance(1.5)
+    assert (host("OFF").stdout, control.get_state()) == ("BUSY", "ON")
+    control.advance(0.5)                                           # t = 2.0 from the toggle, 0.5 from BUSY
+    r = host("OFF")
+    assert (r.stdout, r.exit_code) == ("OK", 0)
+    assert control.get_state() == "OFF"
+
+
+@pytest.mark.ac("AC-F1-20")
+def test_ac_f1_20_status_and_noop_inside_window(host, control):
+    _toggle(host, control, "OFF")                                  # toggle ON at t = 0
+    control.advance(1.0)
+    r = host("STATUS")
+    assert (r.stdout, r.exit_code) == ("STATUS ON", 0)
+    r = host("ON")                                                 # no-op: not a toggle, never BUSY
+    assert (r.stdout, r.exit_code) == ("OK", 0)
+    assert control.get_state() == "ON"
+    control.advance(1.0)                                           # t = 2.0: neither call restarted the window
+    r = host("OFF")
+    assert (r.stdout, r.exit_code) == ("OK", 0)
+    assert control.get_state() == "OFF"
+
+
+@pytest.mark.ac("AC-F1-21")
+def test_ac_f1_21_reset_clears_window(host, control):
+    _toggle(host, control, "OFF")                                  # toggle ON at t = 0
+    control.reset()                                                # state OFF, window cleared
+    r = host("ON")
+    assert (r.stdout, r.exit_code) == ("OK", 0)
+    assert control.get_state() == "ON"
+
+
+@pytest.mark.ac("AC-F1-21")
+def test_ac_f1_21_set_state_starts_no_window(host, control):
+    control.set_state("ON")
+    r = host("OFF")
+    assert (r.stdout, r.exit_code) == ("OK", 0)
+    assert control.get_state() == "OFF"
+
+
+@pytest.mark.ac("AC-F1-22")
+def test_ac_f1_22_hw_fault_has_priority_over_busy(host, control):
+    _toggle(host, control, "OFF")                                  # toggle ON at t = 0
+    control.advance(0.5)
+    control.fault("HW_FAULT")
+    r = host("OFF")
+    assert (r.stdout, r.exit_code) == ("ERR HW_FAULT", 1)
+    assert control.get_state() == "ON"
+
+
+@pytest.mark.ac("AC-F1-22")
+@pytest.mark.parametrize("cmd, expected", [
+    ("", "ERR EMPTY"), ("A" * 33, "ERR TOO_LONG"), ("off", "ERR UNKNOWN_CMD"),
+], ids=["empty", "33B", "lowercase"])
+def test_ac_f1_22_invalid_line_inside_window_keeps_own_error(host, control, cmd, expected):
+    _toggle(host, control, "OFF")                                  # toggle ON at t = 0
+    control.advance(0.5)
+    r = host(cmd)
+    assert (r.stdout, r.exit_code) == (expected, 1)
+    assert control.get_state() == "ON"
