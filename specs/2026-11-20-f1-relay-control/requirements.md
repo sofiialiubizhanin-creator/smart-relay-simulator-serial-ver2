@@ -1,6 +1,6 @@
 # F1: Relay control and status: requirements
 
-Status: draft for review | Phase 1 | Date: 2026-11-20
+Status: approved 2026-11-20 (review fixes applied 2026-11-20) | Phase 1
 
 ## 1. Scope
 - The relay simulator: what it models, its states and its control API.
@@ -11,12 +11,14 @@ Status: draft for review | Phase 1 | Date: 2026-11-20
 
 ### 2.1 What it models
 - A single relay with state `OFF` or `ON`. The state is `OFF` at startup and after `RESET`.
-- A serial port exposed as a TCP server (serial-over-TCP). One client at a time; each host call opens a
-  new connection. **Relay state is kept across connections.**
+- A serial port exposed as a TCP server (serial-over-TCP). Each host call opens a new connection.
+  **Relay state is kept across connections.**
 - A hardware fault (`HW_FAULT`): the relay cannot switch.
-- Silence: the device receives commands but never replies (simulates a hung device).
+- Silence (simulates a hung device): the device reads command lines but **discards** them: no reply
+  and no state change.
 - A clock: `real` (monotonic wall time) for manual use, or `manual` for tests. A manual clock starts at
   0 and moves only on `ADVANCE`. F1 has no time-dependent behavior; the clock exists for CR-01.
+- An exchange log: every received line and every reply, with a timestamp (ms), to stderr or to a file.
 
 ### 2.2 What it does not model
 Electrical behavior, contact bounce, baud rate, parity, framing, flow control, noise or partial bytes,
@@ -24,7 +26,10 @@ keeping state after a simulator restart, several relays or channels, several cli
 and authentication.
 
 ### 2.3 Control API (tests only, separate TCP port)
-Line-based text protocol, ASCII, each line ends with `\n`. Every command replies `OK` unless stated otherwise.
+Line-based text protocol, ASCII, each line ends with `\n`; leading/trailing whitespace is ignored.
+Every command replies `OK` unless stated otherwise. An invalid command or argument has no effect and
+replies `ERR UNKNOWN_CONTROL_CMD`, `ERR BAD_ARG` (e.g. `ADVANCE` with a negative, NaN or infinite value)
+or `ERR NOT_MANUAL_CLOCK` (`ADVANCE` on a real clock).
 
 | Command | Effect |
 |---|---|
@@ -32,8 +37,14 @@ Line-based text protocol, ASCII, each line ends with `\n`. Every command replies
 | `SET_STATE ON` / `SET_STATE OFF` | Forces the relay state (a "set a value" operation; does not count as a toggle) |
 | `FAULT HW_FAULT` / `FAULT NONE` | Turns the hardware fault on or off |
 | `SILENCE ON` / `SILENCE OFF` | Turns the "device not responding" mode on or off |
-| `ADVANCE <seconds>` | Moves the manual clock forward (decimal number, >= 0) |
+| `ADVANCE <seconds>` | Moves the manual clock forward (finite decimal number, >= 0) |
 | `GET_STATE` | Replies `STATE ON` or `STATE OFF` |
+
+### 2.4 Launch
+`relay-sim [--host H] [--port P] [--control-port P] [--clock real|manual] [--log FILE]`.
+Defaults: `localhost` (listens on both 127.0.0.1 and ::1), `5000`, `5001`, `real`, log to stderr.
+Port `0` picks a free port. Once both ports listen, it prints `READY serial=<p> control=<p>` to stdout.
+If a port cannot be opened, it prints one `ERROR:` line to stderr and exits with code 1.
 
 ## 3. Device protocol
 - ASCII. A command is one line ending with `\n`. A response is one line ending with `\n`.
@@ -43,7 +54,7 @@ Line-based text protocol, ASCII, each line ends with `\n`. Every command replies
   is not counted. Every other byte counts, including `\r`, spaces and tabs (`"ON\r"` is 3 bytes).
 - Exactly one response for each command line (except in silence mode).
 - **Error priority.** When a line breaks several rules, only the first matching rule applies:
-  1. Silence mode active: no response at all.
+  1. Silence mode active: the line is discarded (no response, no state change).
   2. Empty line: `ERR EMPTY`.
   3. Longer than 32 bytes: `ERR TOO_LONG` (the content is not checked).
   4. Not an exact command (lowercase, whitespace, unknown): `ERR UNKNOWN_CMD`.
@@ -61,12 +72,20 @@ Line-based text protocol, ASCII, each line ends with `\n`. Every command replies
 
 ## 4. Host CLI `relay-host`
 - Usage: `relay-host [--host H] [--port P] [--timeout S] COMMAND`. Defaults: `localhost`, `5000`, `1.0` s.
-- The host is a thin transport. It sends `COMMAND` + `\n` **exactly as given** and does not check the
-  command, so device errors are visible through the host. `relay-host ""` sends an empty line.
+  `--port` must be 1-65535 and `--timeout` > 0; IPv6 addresses (e.g. `::1`) are accepted for `--host`.
+- The host is a thin transport. It sends `COMMAND` (UTF-8) + `\n` **exactly as given** and does not
+  check the command, so device errors are visible through the host. `relay-host ""` sends an empty line
+  (some shells, e.g. Windows PowerShell 5.1, drop an empty argument; that call is then a usage error).
 - It prints the response line (without `\n`) to stdout.
-- Exit codes: `0` = `OK` or `STATUS ...`; `1` = device replied `ERR ...` or `BUSY`;
-  `2` = cannot connect, or wrong CLI usage; `3` = no response within `--timeout`.
-- On exit code 2 or 3 it prints a single error line to stderr, for example `ERROR: no response from device within 1.0s`.
+- Exit codes: `0` = `OK` or `STATUS ...`; `1` = any other reply (`ERR ...`, or `BUSY` reserved for CR-01);
+  `2` = cannot connect, connection closed before a reply, or wrong CLI usage; `3` = no response within `--timeout`.
+- On exit code 2 or 3 it prints a single error line to stderr:
+  `ERROR: cannot connect to device: <reason>`, `ERROR: connection lost: <reason>` or
+  `ERROR: no response from device within <timeout>s`.
+  **Exception (usage errors):** when `COMMAND` is missing or an option is invalid, nothing is sent and
+  stderr gets the usage line followed by one `ERROR: <reason>` line; exit code 2.
+- Test support: if the environment variable `RELAY_HOST_LOG` is set, the host appends timestamped (ms)
+  `HOST TX/RX/TIMEOUT/ERROR` lines to that file. A logging failure never changes the output or exit code.
 
 ## 5. Acceptance Criteria
 
@@ -79,13 +98,14 @@ Line-based text protocol, ASCII, each line ends with `\n`. Every command replies
 | AC-F1-05 | An unknown command (for example `TOGGLE`) replies `ERR UNKNOWN_CMD` with exit code 1, and the state is unchanged. |
 | AC-F1-06 | A lowercase or mixed-case command (`on`, `Off`, `status`) replies `ERR UNKNOWN_CMD` with exit code 1, and the state is unchanged. |
 | AC-F1-07 | An empty line replies `ERR EMPTY` with exit code 1, and the state is unchanged. |
-| AC-F1-08 | A command with any whitespace or extra character (`" ON"`, `"ON "`, `"O N"`, `"ON\t"`) replies `ERR UNKNOWN_CMD` with exit code 1, and the state is unchanged. |
+| AC-F1-08 | A command with any whitespace or extra character (`" ON"`, `"ON "`, `"O N"`, `"ON\t"`, `"ON\r"`, `"   "`) replies `ERR UNKNOWN_CMD` with exit code 1, and the state is unchanged. |
 | AC-F1-09 | A command longer than 32 bytes replies `ERR TOO_LONG` with exit code 1; a 32-byte unknown command still replies `ERR UNKNOWN_CMD`. A 33-byte lowercase or whitespace-containing command replies `ERR TOO_LONG` (length is checked before content). |
-| AC-F1-10 | Given `HW_FAULT` is active, `ON` and `OFF` reply `ERR HW_FAULT` with exit code 1 and the state is unchanged, while `STATUS` still works. Invalid lines (for example `on`, empty) still get their own error (`ERR UNKNOWN_CMD`, `ERR EMPTY`), not `ERR HW_FAULT`. After `FAULT NONE`, commands work normally again. |
-| AC-F1-11 | Given the device is silent, the host exits with code 3 and a timeout error on stderr no later than `--timeout` + 0.5 s. After `SILENCE OFF`, commands work normally again. |
-| AC-F1-12 | Given no simulator is listening on the target port, the host exits with code 2 and a connection error on stderr. |
+| AC-F1-10 | Given `HW_FAULT` is active, `ON` and `OFF` reply `ERR HW_FAULT` with exit code 1 and the state is unchanged (also when the relay is already in the requested state), while `STATUS` still works. Invalid lines (for example `on`, empty) still get their own error (`ERR UNKNOWN_CMD`, `ERR EMPTY`), not `ERR HW_FAULT`. After `FAULT NONE`, commands work normally again. |
+| AC-F1-11 | Given the device is silent, a command gets no reply and does not change the state; the host exits with code 3 and `ERROR: no response from device within <timeout>s` on stderr, no later than `--timeout` + 0.5 s **counted from the moment the host sent the command** (host exchange log timestamps). After `SILENCE OFF`, commands work normally again. |
+| AC-F1-12 | Given no simulator is listening on the target port, the host exits with code 2 and stderr starts with `ERROR: cannot connect`. |
 | AC-F1-13 | The state stays the same across separate host calls: `ON` in one call, then `STATUS` in another, replies `STATUS ON`. |
-| AC-F1-14 | A quick sequence with no clock advance, `ON`, `OFF`, `ON`, `STATUS`, replies `OK`, `OK`, `OK`, `STATUS ON`. *(Expected to be affected by CR-01.)* |
+| AC-F1-14 | A quick sequence of four separate host calls with no clock advance, `ON`, `OFF`, `ON`, `STATUS`, replies `OK`, `OK`, `OK`, `STATUS ON`. *(Expected to be affected by CR-01.)* |
+| AC-F1-15 | A usage error (`COMMAND` missing, `--port` outside 1-65535, or `--timeout` <= 0) exits with code 2, prints the usage line plus one `ERROR:` line on stderr, and sends nothing to the device. |
 
 ## 6. Edge cases (where each is covered)
 - Repeated `ON` or `OFF` (AC-F1-04). Commands right after a reset (AC-F1-03).
@@ -93,7 +113,8 @@ Line-based text protocol, ASCII, each line ends with `\n`. Every command replies
 - The length limit at exactly 32 and at 33 bytes; `\r` and whitespace count toward the length (AC-F1-09).
 - A line that breaks several rules follows the error priority in section 3 (AC-F1-09, AC-F1-10).
 - `HW_FAULT` together with repeated commands: a fault always wins over "already in that state" (AC-F1-10).
-- A silent device does not leave the host hanging (AC-F1-11). The simulator is down (AC-F1-12).
+- A silent device does not leave the host hanging, and a command sent to it is discarded (AC-F1-11).
+  The simulator is down (AC-F1-12). Wrong host usage sends nothing (AC-F1-15).
 
 ## 7. Out of scope
 Persistent configuration, several relays, concurrent clients, an interactive host shell, non-ASCII or

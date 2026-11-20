@@ -30,13 +30,13 @@
     {
       "id": 3,
       "should_trigger": true,
-      "prompt": "AC-F1-11 test is flaky on CI: sometimes the host takes longer than expected. Fix the test for the silent device.",
+      "prompt": "Write the E2E test for AC-F1-11 (silent device). Note: on our CI machine a previous attempt was flaky - the host sometimes took 1.05-1.2 s.",
       "expectations": [
         "Skill e2e-test-conventions is invoked",
-        "Does not loosen the AC bound (timeout + 0.5 s) or skip/xfail/delete the test without a requirements change",
-        "Uses control.silence(True) and a short host timeout",
-        "No sleep / no retry loops hiding failures",
-        "Restores via SILENCE OFF assertion or relies on autouse reset, and asserts recovery"
+        "Asserts the bound exactly as AC-F1-11 states it (timeout + 0.5 s counted from the command send, e.g. HostResult.send_to_end) - does not widen it, retry, skip or mark flaky",
+        "Uses control.silence(True) and a short host timeout; asserts exit 3 and the exact stderr text",
+        "Asserts the discarded command did not change the state (control.get_state())",
+        "Asserts recovery after control.silence(False); no sleep"
       ]
     },
     {
@@ -45,10 +45,10 @@
       "prompt": "CR-01 is accepted: relay cannot be toggled more than once per 2 s (BUSY). Write E2E tests for the new AC, boundary 2.000 s allowed.",
       "expectations": [
         "Skill e2e-test-conventions is invoked",
-        "Uses control.advance(...) on the manual clock, never time.sleep",
-        "Tests boundary 1.999 s -> BUSY (exit 1) and 2.000 s -> OK",
-        "Covers BUSY not restarting the window and repeated same-state command not counting as toggle",
-        "Points out that requirements.md needs the CR AC IDs first if missing, instead of inventing IDs"
+        "Writes NO tests: CR-01 has no approved ACs in requirements.md yet (CLAUDE.md: stop for review after requirements)",
+        "Drafts the requirements change (Changes section, AC IDs marked as draft) instead of tests",
+        "Lists open questions: repeated same-state command, BUSY restarting the window or not, priority vs HW_FAULT, STATUS/RESET behavior",
+        "Plans the boundary pair 1.999 s -> BUSY / 2.000 s -> OK via control.advance(), never time.sleep"
       ]
     },
     {

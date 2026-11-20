@@ -1,44 +1,53 @@
 # F1: Relay control and status: plan
 
-Status: draft for review | Inputs: `requirements.md`, `../tech-stack.md`, skill `e2e-test-conventions`
+Status: approved 2026-11-20 (updated after the G0-G3 review) | Inputs: `requirements.md`, `../tech-stack.md`, skill `e2e-test-conventions`
 
 ## G0. Project skeleton
-- `pyproject.toml`: src layout, packages `relay_sim` and `relay_host`, dependency `pyserial`,
+- `pyproject.toml`: src layout, packages `relay_sim` and `relay_host`, dependency `pyserial>=3.5,<4`,
   dev extras `pytest` and `pytest-html`, console scripts `relay-sim` and `relay-host`, pytest config
   (`testpaths`, marker `ac`, `--strict-markers`).
 - `.gitattributes` (LF line endings), `README.md`, `CHANGELOG.md` skeletons.
 
 ## G1. Simulator core (`src/relay_sim`), pure logic with no I/O
-- `clock.py`: a `Clock` protocol, `RealClock` (monotonic), `ManualClock` (starts at 0, `advance(s)`, rejects negative values).
+- `clock.py`: a `Clock` protocol, `RealClock` (monotonic), `ManualClock` (starts at 0, `advance(s)`,
+  rejects negative and non-finite values).
 - `device.py`: `RelayDevice(clock)` holding `state`, `hw_fault` and `silent`, and
-  `handle_line(raw: bytes) -> bytes | None`. It applies the error priority from requirements section 3 in this order:
-  silence -> empty -> too long -> exact match -> HW_FAULT -> execute. It also has the control operations
-  (`reset`, `set_state`, ...).
+  `handle_line(line: bytes, overflow: bool = False) -> bytes | None` (`overflow` = the line was longer than
+  32 bytes and its content was dropped). It applies the error priority from requirements section 3 in this order:
+  silence -> empty -> too long -> exact match -> HW_FAULT -> execute. Control operations: `reset`,
+  `set_state`, `set_fault`, `set_silent`.
 
 ## G2. Simulator servers and launcher
-- `server.py`: a threaded TCP "serial" server that reads bytes up to `\n` and writes one reply line per
-  command (none when silent). Connections are handled one at a time, and the device state is shared.
-  Lines longer than 32 bytes are read to the `\n` and then rejected (no buffer overflow, no
-  disconnect). There is also a control server running the control API (requirements section 2.3).
-  A lock serializes all device access.
-- `__main__.py`: `python -m relay_sim [--host] [--port 5000] [--control-port 5001] [--clock real|manual]`.
-  Port `0` picks a free port. Once both servers are listening, it prints `READY serial=<p> control=<p>`.
+- `server.py`: a threaded TCP "serial" server (one thread per connection) that reads bytes up to `\n` and
+  writes one reply line per command (none when silent). A lock serializes all device access, so the
+  shared state stays consistent; concurrent clients are not modelled beyond that (out of scope).
+  Lines longer than 32 bytes are read to the `\n` and then rejected (bounded buffer, no disconnect).
+  A control server runs the control API (requirements section 2.3); client disconnects never print tracebacks.
+  For `localhost` both 127.0.0.1 and ::1 listen on the same port (on Windows a refused ::1 connect costs ~2 s).
+- Exchange log: timestamped lines to stderr, or to `--log FILE`.
+- `__main__.py`: `relay-sim` / `python -m relay_sim` with the options of requirements section 2.4;
+  prints `READY serial=<p> control=<p>`; a port that cannot be opened gives one `ERROR:` line and exit 1.
 
 ## G3. Host CLI (`src/relay_host`)
-- `cli.py` / `__main__.py`: argparse with `--host`, `--port`, `--timeout` and a positional `COMMAND`
-  (sent as is, `""` allowed). Opens `serial.serial_for_url("socket://host:port", timeout=...)`,
-  writes `COMMAND\n` and reads one line until the deadline.
-- Exit codes 0/1/2/3 and stderr messages as in requirements section 4. If `RELAY_HOST_LOG` is set,
-  it appends timestamped `HOST TX/RX/TIMEOUT/ERROR` lines to that file.
+- `cli.py` / `__main__.py`: argparse with `--host`, `--port` (1-65535), `--timeout` (> 0) and a positional
+  `COMMAND` (sent as is, `""` allowed). Uses pyserial's `socket://` handler
+  (`serial.urlhandler.protocol_socket.Serial`, the class `serial_for_url` returns for `socket://`) through
+  a subclass that only drops pyserial's hard-coded 0.3 s sleep in `close()`. IPv6 hosts are bracketed in the URL.
+- Writes `COMMAND\n` and reads one line until the deadline. Exit codes 0/1/2/3 and stderr messages as in
+  requirements section 4. If `RELAY_HOST_LOG` is set, it appends timestamped `HOST TX/RX/TIMEOUT/ERROR`
+  lines to that file; logging errors are ignored.
 
 ## G4. E2E framework (`tests/e2e`), built per skill `e2e-test-conventions`
-- `conftest.py`: the fixtures `simulator`, `control` (autouse, RESET), `host`, `dead_port` and
-  `exchange_log`. A collection hook fails any test that has no valid `ac` marker. A report hook attaches
-  the exchange log to `reports/e2e-report.html`.
-- `helpers.py`: `ControlClient`, `HostResult`, `wait_until`.
+- `conftest.py`: the fixtures `simulator` (simulator log to `reports/runs/` via `--log`), `control`
+  (autouse, RESET), `host`, `fresh_simulator` (a just-started simulator for "after startup" checks),
+  `dead_port` and `exchange_log`. A collection hook fails any test that has no valid `ac` marker or whose
+  name does not match it. A `--reverse` option runs the tests in reverse order. A report hook attaches
+  the exchange log and an AC column to `reports/e2e-report.html`.
+- `helpers.py`: `ControlClient`, `HostResult` (incl. `sent` and `send_to_end`: seconds from the host's
+  `TX` to its `RX`/`TIMEOUT`, read from the host log), `wait_until`.
 
 ## G5. E2E tests (`tests/e2e/test_f1_relay_control.py`)
-- Written from `validation.md` (one row per AC), not from the G1-G3 code.
+- Written from `requirements.md` section 5 and `validation.md` (one row per AC), not from the G1-G3 code.
 
 ## G6. One-command runner
 - `run.py` (standard library only): creates `.venv` if it's missing, runs `pip install -e .[dev]`,
@@ -49,10 +58,11 @@ Status: draft for review | Inputs: `requirements.md`, `../tech-stack.md`, skill 
 
 ## G7. Validation
 - Run `python run.py`. Fill in the AC <> test table and the run results in `validation.md`, check
-  with `ac_coverage.py`, and write the CHANGELOG entry.
-- Run the skill evals on v1, refine the skill to v2, run them again, and record the results in `reports/skill-evals.md`.
+  with `.claude/skills/e2e-test-conventions/scripts/ac_coverage.py`, and write the CHANGELOG entry.
+- Skill evals: run on v1 right after G4 (before G5), refine the skill to v2, run again, and record the
+  results in `reports/skill-evals.md`. G5 is then written with v2.
 
 ## Risks
-- Windows argv passing of `""`, `\t` and `\r` to the subprocess: check this in G5. If argv can't carry
-  them, `relay-host` gets a documented `--raw-hex` option (this needs a requirements change first).
+- Windows argv passing of `""`, `\t` and `\r`: `subprocess` passes them unchanged (checked); Windows
+  PowerShell 5.1 drops `""` (accepted, documented in requirements section 4).
 - Port reuse in `dead_port` (AC-F1-12): we use a freshly closed ephemeral port; the race window is negligible on localhost.

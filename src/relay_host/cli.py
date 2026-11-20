@@ -1,8 +1,8 @@
 """relay-host [--host H] [--port P] [--timeout S] COMMAND
 
-Sends COMMAND + \\n verbatim over pyserial socket://, prints the reply line.
-Exit codes: 0 OK/STATUS, 1 ERR/BUSY, 2 connection or usage error, 3 no response within timeout.
-If RELAY_HOST_LOG is set, appends a timestamped exchange log to that file.
+Sends COMMAND (UTF-8) + \\n verbatim over pyserial socket://, prints the reply line.
+Exit codes: 0 OK/STATUS, 1 any other reply, 2 connection or usage error, 3 no response within timeout.
+If RELAY_HOST_LOG is set, appends a timestamped exchange log to that file (failures are ignored).
 """
 import argparse
 import os
@@ -13,7 +13,8 @@ from datetime import datetime
 import serial
 from serial.urlhandler.protocol_socket import Serial as SocketSerial
 
-EXIT_OK, EXIT_DEVICE_ERROR, EXIT_CONNECTION, EXIT_TIMEOUT = 0, 1, 2, 3
+EXIT_OK, EXIT_DEVICE_ERROR, EXIT_TIMEOUT = 0, 1, 3
+EXIT_CONNECTION = EXIT_USAGE = 2
 
 
 class OneShotSocketSerial(SocketSerial):
@@ -35,6 +36,8 @@ class OneShotSocketSerial(SocketSerial):
 
 
 class _ExchangeLog:
+    """Best-effort test log: a logging failure never changes the host's output or exit code."""
+
     def __init__(self, path: str | None) -> None:
         self.path = path
 
@@ -42,26 +45,45 @@ class _ExchangeLog:
         if not self.path:
             return
         ts = datetime.now().isoformat(timespec="milliseconds")
-        with open(self.path, "a", encoding="utf-8") as f:
-            f.write(f"{ts} HOST {direction} {payload!r}\n")
+        try:
+            with open(self.path, "a", encoding="utf-8") as f:
+                f.write(f"{ts} HOST {direction} {payload!r}\n")
+        except OSError:
+            pass
 
 
 class _Parser(argparse.ArgumentParser):
-    def error(self, message: str):  # usage errors -> exit 2 (argparse default is also 2)
+    def error(self, message: str):
+        """Usage error (requirements section 4 exception): usage line + one ERROR line, exit 2."""
         self.print_usage(sys.stderr)
-        self.exit(EXIT_CONNECTION, f"ERROR: {message}\n")
+        self.exit(EXIT_USAGE, f"ERROR: {message}\n")
+
+
+def _port(value: str) -> int:
+    port = int(value)
+    if not 1 <= port <= 65535:
+        raise argparse.ArgumentTypeError(f"port must be 1-65535, got {value}")
+    return port
+
+
+def _timeout(value: str) -> float:
+    seconds = float(value)
+    if not seconds > 0 or seconds == float("inf"):
+        raise argparse.ArgumentTypeError(f"timeout must be a positive number of seconds, got {value}")
+    return seconds
 
 
 def main(argv: list[str] | None = None) -> int:
     p = _Parser(prog="relay-host", description="Send one command to the smart relay simulator")
-    p.add_argument("--host", default="localhost")
-    p.add_argument("--port", type=int, default=5000)
-    p.add_argument("--timeout", type=float, default=1.0, help="seconds to wait for the reply")
+    p.add_argument("--host", default="localhost", help="device host name or IP address (IPv6 allowed)")
+    p.add_argument("--port", type=_port, default=5000)
+    p.add_argument("--timeout", type=_timeout, default=1.0, help="seconds to wait for the reply")
     p.add_argument("command", help='command line to send verbatim, e.g. ON, OFF, STATUS ("" = empty line)')
     args = p.parse_args(argv)
     log = _ExchangeLog(os.environ.get("RELAY_HOST_LOG"))
 
-    url = f"socket://{args.host}:{args.port}"
+    host = f"[{args.host}]" if ":" in args.host and not args.host.startswith("[") else args.host
+    url = f"socket://{host}:{args.port}"
     try:
         port = OneShotSocketSerial(url, timeout=args.timeout, write_timeout=args.timeout)
     except (serial.SerialException, OSError, ValueError) as e:

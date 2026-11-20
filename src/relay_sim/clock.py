@@ -1,4 +1,5 @@
 """Clocks for the simulator: real (monotonic wall time) or manual (moved only by the control API)."""
+import math
 import time
 from typing import Protocol
 
@@ -28,8 +29,8 @@ class ManualClock:
         return self._now
 
     def advance(self, seconds: float) -> None:
-        if seconds < 0:
-            raise ValueError("cannot advance by a negative amount")
+        if not math.isfinite(seconds) or seconds < 0:
+            raise ValueError(f"advance needs a finite value >= 0, got {seconds}")
         self._now += seconds
 
     def reset(self) -> None:

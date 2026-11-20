@@ -22,12 +22,18 @@ class RelayDevice:
             raise ValueError(state)
         self.state = state
 
+    def set_fault(self, active: bool) -> None:
+        self.hw_fault = active
+
+    def set_silent(self, active: bool) -> None:
+        self.silent = active
+
     # ---- device protocol ----
     def handle_line(self, line: bytes, overflow: bool = False) -> bytes | None:
         """Handle one command line (without the trailing \\n).
 
         `overflow=True` means the line was longer than MAX_LINE_LEN and its content was discarded.
-        Returns the reply line (without \\n), or None when the device is silent.
+        Returns the reply line (without \\n), or None when the device is silent (line discarded, no effect).
         Error priority (requirements section 3): silence > empty > too long > unknown > HW fault.
         """
         if self.silent:

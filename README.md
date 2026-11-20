@@ -3,7 +3,8 @@
 A software relay that speaks a line-based text protocol over serial-over-TCP (`socket://`), and a
 one-shot host CLI `relay-host` that controls it. Built spec-first: see `specs/`.
 
-> Status: minimal program (plan groups G0-G3). The single command `python run.py` and the E2E tests come in later groups.
+> Status: minimal program (plan groups G0-G3) and the E2E test framework (G4, `tests/e2e/`). The test cases
+> and the single command `python run.py` come in later groups.
 
 ## Setup (once)
 ```
@@ -17,12 +18,20 @@ python -m venv .venv
 .venv\Scripts\relay-host ON               # terminal 2 -> OK
 .venv\Scripts\relay-host STATUS           # -> STATUS ON
 .venv\Scripts\relay-host on               # -> ERR UNKNOWN_CMD (exit code 1)
-.venv\Scripts\relay-host ""               # -> ERR EMPTY (exit code 1)
+.venv\Scripts\relay-host ""               # -> ERR EMPTY (exit code 1), see the PowerShell note below
 ```
-`relay-host [--host H] [--port P] [--timeout S] COMMAND`. Exit codes: 0 `OK`/`STATUS`, 1 `ERR`/`BUSY`,
-2 cannot connect or wrong usage, 3 no response within the timeout.
-`relay-sim [--host H] [--port P] [--control-port P] [--clock real|manual]` prints `READY serial=<p> control=<p>`
-once it is listening. The simulator logs every exchange to stderr with timestamps.
+`relay-host [--host H] [--port P] [--timeout S] COMMAND`. Exit codes: 0 `OK`/`STATUS`, 1 any other reply
+(`ERR ...`), 2 cannot connect or wrong usage, 3 no response within the timeout.
+
+`relay-sim [--host H] [--port P] [--control-port P] [--clock real|manual] [--log FILE]` prints
+`READY serial=<p> control=<p>` once it is listening. `localhost` (default) listens on 127.0.0.1 and ::1.
+Every exchange is logged with timestamps to stderr, or to `--log FILE`.
+
+**Windows PowerShell 5.1:** it drops an empty `""` argument, so `relay-host ""` becomes a usage error.
+Send an empty line with ``relay-host `"`"`` or `relay-host --% ""` (cmd.exe, bash and PowerShell 7.3+ pass `""` as is).
+
+**Control API** (for tests, port 5001): `RESET`, `SET_STATE ON|OFF`, `GET_STATE`, `FAULT HW_FAULT|NONE`,
+`SILENCE ON|OFF`, `ADVANCE <seconds>` (manual clock only). See requirements section 2.3.
 
 ## Protocol (summary)
 | Request | Reply |
