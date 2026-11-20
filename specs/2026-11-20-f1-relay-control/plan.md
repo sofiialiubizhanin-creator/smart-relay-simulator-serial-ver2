@@ -66,3 +66,37 @@ Status: approved 2026-11-20 (updated after the G0-G3 review) | Inputs: `requirem
 - Windows argv passing of `""`, `\t` and `\r`: `subprocess` passes them unchanged (checked); Windows
   PowerShell 5.1 drops `""` (accepted, documented in requirements section 4).
 - Port reuse in `dead_port` (AC-F1-12): we use a freshly closed ephemeral port; the race window is negligible on localhost.
+
+---
+
+## CR-01: Toggle rate limit (Phase 2)
+Status: approved 2026-11-20 | Inputs: `requirements.md` section 8 (CR-01), skill `e2e-test-conventions`.
+G0-G7 above stay as they are; CR-01 adds the groups below.
+
+### G8. Implementation (`src/relay_sim/device.py`)
+- `RelayDevice` keeps `last_toggle_ms` (`None` at startup and after `reset()`); time is
+  `round(clock.now() * 1000)` in integer ms, so `1.999 + 0.001` cannot fall below 2000 by float rounding.
+- In `handle_line`, after the existing rules 1-5: an `ON`/`OFF` that would change the state while
+  `last_toggle_ms` is set and `now_ms - last_toggle_ms < 2000` -> `BUSY` (rule 6). An accepted toggle sets
+  `last_toggle_ms = now_ms`. No-op `ON`/`OFF`, `STATUS` and rejected commands do not touch it.
+- `set_state` (control API) does not touch `last_toggle_ms`; `reset` clears it. Same logic for real and manual clocks.
+- Host: no change (`BUSY` already gives exit code 1).
+
+### G9. Regression run (before any test is changed)
+- Run the **unchanged** F1 suite (`tests/e2e/test_f1_relay_control.py` as of commit `4293653`) against G8:
+  `python run.py --runs 1`.
+- Record in `reports/regression-cr01.md`: every failing test, its AC, expected vs. actual replies, the cause
+  (which toggle fell inside the window), and the action. Passing tests are listed as unaffected.
+- If a failing test belongs to an AC other than AC-F1-14, add that AC to requirements section 8
+  "Supersedes" first and **stop for user review** before changing its test.
+
+### G10. Tests (`tests/e2e/test_f1_relay_control.py`, per skill)
+- Update the tests of superseded ACs to section 8. The quick sequence of AC-F1-14 keeps no clock
+  advance; other affected tests get an explicit `control.advance(2.0)` between toggles, where the AC is not about timing.
+- Add tests for AC-F1-17..22 with `control.advance()` only (boundary pair 1.999 / 2.000 s, both directions, multi-step advance).
+- Fill the Test(s) cells of the CR-01 rows in `validation.md`.
+
+### G11. Validation and release
+- `python run.py` (5 runs) green; coverage script: every AC (incl. 17-22) covered; `--reverse` green.
+- Fill the CR-01 Result cells and Run results in `validation.md`; CHANGELOG `0.2.0`; README protocol table
+  (`BUSY`); roadmap phase 2 done.

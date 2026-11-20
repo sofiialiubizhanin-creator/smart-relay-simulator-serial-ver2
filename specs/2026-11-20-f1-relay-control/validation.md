@@ -41,3 +41,26 @@ with `GET_STATE`. Every test starts after `RESET` (state `OFF`, no fault or sile
 | 2026-11-20 | `pytest tests/e2e --reverse` | same | 73 passed |
 
 All 16 F1 acceptance criteria pass. AC-F1-14 is expected to change with CR-01 (phase 2).
+
+---
+
+## CR-01: Toggle rate limit (requirements section 8)
+Status: **pre-implementation** (what and how we verify). The F1 results above stay as the phase 1 record;
+CR-01 results are filled in below. Time is moved only with `control.advance()` (manual clock), never sleep.
+"Toggle X" = host `X` that changes the state and replies `OK`.
+
+| AC | What we verify | How (setup -> action -> expected) | Test(s) | Result |
+|---|---|---|---|---|
+| AC-F1-14 (changed) | Quick sequence under CR-01 | four separate host calls `ON`, `OFF`, `ON`, `STATUS`, no `ADVANCE` -> `OK`, `BUSY`, `OK`, `STATUS ON`; final state ON | | |
+| AC-F1-17 | Toggle inside the window is `BUSY` | both directions (set OFF -> toggle `ON`; set ON -> toggle `OFF`); then advance 0 / 1.999 -> the opposite command -> `BUSY`/1, state unchanged | | |
+| AC-F1-18 | Toggle at or after 2.000 s is accepted | both directions; after the first toggle advance 2.000, 2.5, or 1.999 + 0.001 (two steps) -> the opposite command -> `OK`/0, state changed | | |
+| AC-F1-19 | `BUSY` does not restart the window | toggle `ON` at 0; advance 1.5 -> `OFF` -> `BUSY`; advance 0.5 (t = 2.0) -> `OFF` -> `OK`, state OFF | | |
+| AC-F1-20 | `STATUS` and no-op inside the window | toggle `ON` at 0; advance 1.0 -> `STATUS` -> `STATUS ON`/0, `ON` -> `OK`/0, state ON; advance 1.0 (t = 2.0) -> `OFF` -> `OK`, state OFF | | |
+| AC-F1-21 | `RESET` clears the window; `SET_STATE` starts none | (a) toggle `ON`, `RESET` (state OFF) -> `ON` at once -> `OK`, state ON; (b) `SET_STATE ON` -> `OFF` at once -> `OK`, state OFF | | |
+| AC-F1-22 | Priority over `BUSY` | toggle `ON` at 0, advance 0.5: with `FAULT HW_FAULT` -> `OFF` -> `ERR HW_FAULT`/1; without fault: `""` -> `ERR EMPTY`, 33 B -> `ERR TOO_LONG`, `off` -> `ERR UNKNOWN_CMD` (never `BUSY`); state stays ON | | |
+
+| Check | How | Result |
+|---|---|---|
+| Regression run | Unchanged F1 suite (commit `4293653`) against the CR-01 implementation; failing tests, cause and action recorded in `reports/regression-cr01.md` | |
+| 5 green runs in a row | `python run.py` -> 5/5 with the updated and new tests | |
+| AC coverage / independence | coverage script exits 0 (AC-F1-01..22); suite green with `--reverse` | |
