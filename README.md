@@ -3,23 +3,41 @@
 A software relay that speaks a line-based text protocol over serial-over-TCP (`socket://`), and a
 one-shot host CLI `relay-host` that controls it. Built spec-first: see `specs/`.
 
-> Status: minimal program (plan groups G0-G3) and the E2E test framework (G4, `tests/e2e/`). The test cases
-> and the single command `python run.py` come in later groups.
+## Run everything with one command
+```
+python run.py
+```
+Needs only Python 3.11+. This one command:
+1. creates `.venv` and installs the project with its test dependencies (skipped when already up to date);
+2. runs the E2E suite **5 times in a row** (the flakiness gate);
+3. writes `reports/e2e-report.html` (the last run, with an AC column and a timestamped host <-> simulator exchange
+   log for each test), `reports/runs/` (every run, plus the simulator log) and `reports/e2e-runs.md` (summary).
 
-## Setup (once)
-```
-python -m venv .venv
-.venv\Scripts\python -m pip install -e .          # Linux/macOS: .venv/bin/python -m pip install -e .
-```
+The exit code is 0 only if all 5 runs pass. Options: `python run.py --runs 1`, `python run.py -- -k f1_07`
+(arguments after `--` go to pytest), `python run.py -- --reverse` (reverse order).
 
-## Run
+### View the results
 ```
-.venv\Scripts\relay-sim                   # terminal 1: simulator, serial port 5000, control API 5001
-.venv\Scripts\relay-host ON               # terminal 2 -> OK
+Get-Content reports\e2e-runs.md           # summary table of the 5 runs (Linux/macOS: cat reports/e2e-runs.md)
+start reports\e2e-report.html             # HTML report of the last run (Linux: xdg-open, macOS: open)
+```
+In the HTML report the **AC** column shows which acceptance criterion each test covers; click a test row to see
+its timestamped exchange log (`CTRL` = control API, `TEST`/`HOST TX`/`HOST RX` = host calls).
+
+## Try it by hand
+Terminal 1 starts the simulator (real clock); stop it with **Ctrl+C**:
+```
+python run.py demo                        # waits for: READY serial=5000 control=5001
+```
+Terminal 2 (Linux/macOS: `.venv/bin/relay-host`):
+```
+.venv\Scripts\relay-host ON               # -> OK
 .venv\Scripts\relay-host STATUS           # -> STATUS ON
 .venv\Scripts\relay-host on               # -> ERR UNKNOWN_CMD (exit code 1)
-.venv\Scripts\relay-host ""               # -> ERR EMPTY (exit code 1), see the PowerShell note below
+.venv\Scripts\relay-host " ON"            # -> ERR UNKNOWN_CMD (exit code 1)
+.venv\Scripts\relay-host --% ""           # -> ERR EMPTY (exit code 1); in cmd.exe/bash: relay-host ""
 ```
+`$LASTEXITCODE` (PowerShell) or `echo $?` (bash) shows the exit code of the last command.
 `relay-host [--host H] [--port P] [--timeout S] COMMAND`. Exit codes: 0 `OK`/`STATUS`, 1 any other reply
 (`ERR ...`), 2 cannot connect or wrong usage, 3 no response within the timeout.
 
@@ -42,3 +60,15 @@ Send an empty line with ``relay-host `"`"`` or `relay-host --% ""` (cmd.exe, bas
 | `ON` / `OFF` during an injected hardware fault | `ERR HW_FAULT` |
 
 Full specification: [specs/2026-11-20-f1-relay-control/requirements.md](specs/2026-11-20-f1-relay-control/requirements.md).
+
+## Project layout
+```
+specs/                              constitution (mission, roadmap, tech-stack) + one folder per feature
+  2026-11-20-f1-relay-control/      requirements.md -> plan.md -> validation.md
+src/relay_sim/                      simulator: device logic, clocks, serial + control-API TCP servers
+src/relay_host/                     relay-host CLI (pyserial socket://)
+tests/e2e/                          E2E fixtures (conftest.py, helpers.py) and tests
+.claude/skills/e2e-test-conventions/  skill used for all E2E test work (SKILL.md, references, scripts, evals)
+reports/                            e2e-runs.md (5-run summary), skill-evals.md (skill evals v1 -> v2)
+run.py                              the one command
+```
